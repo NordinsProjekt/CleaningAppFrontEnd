@@ -1,0 +1,162 @@
+﻿@page "/task-templates"
+@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
+@using CleaningApp.Domain.Entities
+@inject TaskService TaskService
+@rendermode InteractiveServer
+
+<h3>Task Templates (Presets)</h3>
+
+<div class="mb-3">
+    <label>Day of Week:</label>
+    <select @bind="newTemplateDay">
+        <option value="0">Sunday</option>
+        <option value="1">Monday</option>
+        <option value="2">Tuesday</option>
+        <option value="3">Wednesday</option>
+        <option value="4">Thursday</option>
+        <option value="5">Friday</option>
+        <option value="6">Saturday</option>
+    </select>
+</div>
+<div class="mb-3">
+    <label>Room:</label>
+    <select @bind="selectedRoomId">
+        <option value="@Guid.Empty">-- Select Room --</option>
+        @if (rooms != null)
+        {
+            @foreach (var r in rooms)
+            {
+                <option value="@r.Id">@r.Name</option>
+            }
+        }
+    </select>
+</div>
+<div class="mb-3">
+    <label>Task Type:</label>
+    <select @bind="selectedTaskTypeId">
+        <option value="@Guid.Empty">-- Select Task Type --</option>
+        @if (taskTypes != null)
+        {
+            @foreach (var t in taskTypes)
+            {
+                <option value="@t.Id">@t.Name</option>
+            }
+        }
+    </select>
+</div>
+
+<div class="mb-3">
+    <label>Default User (optional):</label>
+    <select @bind="selectedUserId">
+        <option value="@Guid.Empty">-- No Default User --</option>
+        @if (users != null)
+        {
+            @foreach (var u in users)
+            {
+                <option value="@u.Id">@u.Name</option>
+            }
+        }
+    </select>
+</div>
+<button @onclick="AddNewTemplate">Add Template</button>
+
+<hr />
+
+@if (taskTemplates == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>DayOfWeek</th>
+                <th>Room</th>
+                <th>TaskType</th>
+                <th>DefaultUser</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var template in taskTemplates)
+            {
+                <tr>
+                    <td>@((DayOfWeek)template.DayOfWeek)</td>
+                    <td>@template.Room.Name</td>
+                    <td>@template.TaskType.Name</td>
+                    <td>@(template.DefaultUser?.Name ?? "N/A")</td>
+                    <td>
+                        <!-- Possibly add "Delete" or "Edit" actions here -->
+                        <button @onclick="@(() => DeleteTemplate(template.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    // Collections for dropdowns
+    private IEnumerable<RoomDto>? rooms;
+    private IEnumerable<TaskTypeDto>? taskTypes;
+    private IEnumerable<UserDto>? users;
+
+    // Templates already in the DB
+    private IEnumerable<TaskTemplate>? taskTemplates;
+
+    // Fields for new template
+    private int newTemplateDay = 0; // Sunday by default
+    private Guid selectedRoomId;
+    private Guid selectedTaskTypeId;
+    private Guid selectedUserId;
+    private string newTemplateNotes = string.Empty;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        // Load data for dropdowns
+        rooms = await TaskService.GetAllRoomsAsync();
+        taskTypes = await TaskService.GetAllTaskTypesAsync();
+        users = await TaskService.GetAllUsersAsync();
+
+        // Load existing templates
+        taskTemplates = await TaskService.GetAllTaskTemplatesAsync();
+    }
+
+    private async System.Threading.Tasks.Task AddNewTemplate()
+    {
+        // Create a new TaskTemplate (domain entity or a TaskTemplateDto)
+        var newTemplate = new TaskTemplate
+            {
+                DayOfWeek = newTemplateDay,
+                RoomId = selectedRoomId,
+                TaskTypeId = selectedTaskTypeId,
+                DefaultUserId = (selectedUserId == Guid.Empty) ? null : selectedUserId,
+                Notes = newTemplateNotes
+            };
+
+        await TaskService.AddTaskTemplateAsync(newTemplate);
+
+        // Reload the list
+        taskTemplates = await TaskService.GetAllTaskTemplatesAsync();
+
+        // Reset fields if you like
+        newTemplateDay = 0;
+        selectedRoomId = Guid.Empty;
+        selectedTaskTypeId = Guid.Empty;
+        selectedUserId = Guid.Empty;
+        newTemplateNotes = string.Empty;
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async System.Threading.Tasks.Task DeleteTemplate(Guid templateId)
+    {
+        // Call TaskService method
+        await TaskService.DeleteTaskTemplateAsync(templateId);
+
+        // Reload templates
+        taskTemplates = await TaskService.GetAllTaskTemplatesAsync();
+    }
+}

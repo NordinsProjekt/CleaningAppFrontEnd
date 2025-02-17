@@ -1,0 +1,78 @@
+﻿@page "/week-planner"
+@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
+@inject TaskService TaskService
+@rendermode InteractiveServer
+
+<h3>Weekly Planner</h3>
+
+<div>
+    <label>Select Week Start:</label>
+    <input type="date" @bind="weekStartDate" />
+    <button @onclick="LoadTasksForWeek">Load</button>
+</div>
+
+<div>
+    @if (tasksForWeek == null)
+    {
+        <p>No tasks loaded yet.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Task Type</th>
+                    <th>Room</th>
+                    <th>Assigned User</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var task in tasksForWeek)
+                {
+                    <tr>
+                        <td>@task.TaskDate.ToShortDateString()</td>
+                        <td>@task.TaskTypeName</td>
+                        <td>@task.RoomName</td>
+                        <td>@task.UserName</td>
+                        <td>
+                            <button @onclick="@(() => AssignToPlanner(task.Id))">Assign to Planerad</button>
+                            <button @onclick="@(() => AssignToMe(task.Id))">Assign to Me</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private DateTime weekStartDate = DateTime.Today;
+    private IEnumerable<TaskViewModel>? tasksForWeek;
+
+    private async Task LoadTasksForWeek()
+    {
+        // Get tasks for the 7-day window from weekStartDate
+        tasksForWeek = await TaskService.GetAllTasksForWeekAsync(weekStartDate);
+    }
+
+    private async Task AssignToPlanner(Guid taskId)
+    {
+        // In a real scenario, you'd fetch the "Planerad" user from your DB
+        // For demonstration, assume you already have the ID or find it
+        var planeradUser = await TaskService.GetOrCreatePlaneradUserAsync();
+        await TaskService.AssignTaskAsync(taskId, planeradUser.Id);
+        await LoadTasksForWeek();
+    }
+
+    private async Task AssignToMe(Guid taskId)
+    {
+        // In a real scenario, you’d have an Auth system with current user’s ID
+        // For now, pass a known user’s ID or your own test user ID
+        var currentUserId = /* get from your authentication logic, or test user ID */ Guid.NewGuid();
+        await TaskService.AssignTaskAsync(taskId, currentUserId);
+        await LoadTasksForWeek();
+    }
+}

@@ -1,0 +1,75 @@
+﻿@page "/task-list"
+@using CleaningApp.Application.Dtos;
+@using CleaningApp.Application.Services;
+@inject TaskService TaskService
+
+<h3>Task List</h3>
+
+<div>
+    <label for="filter">Filter by User:</label>
+    <InputText @bind-Value="filterUser" class="form-control" />
+</div>
+
+<div>
+    <label for="sort">Sort by:</label>
+    <select @bind="sortOption" class="form-control">
+        <option value="date">Date</option>
+        <option value="user">User</option>
+        <option value="room">Room</option>
+    </select>
+</div>
+
+<button class="btn btn-primary" @onclick="LoadTasks">Apply</button>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Room</th>
+            <th>Task Type</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var task in filteredTasks)
+        {
+            <tr>
+                <td>@task.UserName</td>
+                <td>@task.RoomName</td>
+                <td>@task.TaskTypeName</td>
+                <td>@task.TaskDate</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<TaskViewModel> tasks = new();
+    private List<TaskViewModel> filteredTasks = new();
+    private string filterUser = string.Empty;
+    private string sortOption = "date";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+    }
+
+    private async Task LoadTasks()
+    {
+        tasks = (await TaskService.GetAllTasksAsync()).ToList();
+        ApplyFilterAndSort();
+    }
+
+    private void ApplyFilterAndSort()
+    {
+        filteredTasks = tasks
+            .Where(t => string.IsNullOrEmpty(filterUser) || t.UserName.ToString().Contains(filterUser, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(t => sortOption switch
+            {
+                "user" => (object)t.UserName,
+                "room" => (object)t.RoomName,
+                _ => (object)t.TaskDate
+            })
+            .ToList();
+    }
+}
