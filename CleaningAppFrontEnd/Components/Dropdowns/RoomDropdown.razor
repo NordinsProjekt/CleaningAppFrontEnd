@@ -1,0 +1,39 @@
+﻿@using CleaningApp.Application.Dtos
+
+<div class="mb-3">
+    <label>Room:</label>
+    <select @bind="SelectedRoomId">
+        <option value="@Guid.Empty">-- Select Room --</option>
+        @if (Rooms != null)
+        {
+            @foreach (var room in Rooms)
+            {
+                <option value="@room.Id">@room.Name</option>
+            }
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter]
+    public List<RoomDto> Rooms { get; set; } = new();
+
+    // Provide two-way binding for the selected RoomId
+    private Guid _selectedRoomId;
+    [Parameter]
+    public Guid SelectedRoomId
+    {
+        get => _selectedRoomId;
+        set
+        {
+            if (_selectedRoomId != value)
+            {
+                _selectedRoomId = value;
+                SelectedRoomIdChanged.InvokeAsync(value);
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback<Guid> SelectedRoomIdChanged { get; set; }
+}

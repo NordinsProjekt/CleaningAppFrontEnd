@@ -1,0 +1,98 @@
+﻿@page "/roomsCrud"
+@using CleaningApp.Application.Dtos
+@inject CleaningApp.Application.Services.RoomService RoomService
+@rendermode InteractiveServer
+
+
+<h3>Rooms</h3>
+<div class="row">
+    <div class="col-4">
+        <h4>Add / Edit Room</h4>
+        <div class="mb-3">
+            <label class="form-label">Name:</label> <input class="form-control" @bind="RoomModel.Name"/>
+        </div> <button class="btn btn-primary" @onclick="SaveRoom">Save</button>
+        @if (RoomModel.Id != Guid.Empty)
+        {
+            <button class="btn btn-secondary" @onclick="CancelEdit" style="margin-left: 5px;">Cancel</button>
+        }
+    </div>
+</div> <hr/>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th> <th style="width:150px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Rooms is not null)
+        {
+            @foreach (var room in Rooms)
+            {
+                <tr>
+                    <td>@room.Name</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" @onclick="@(() => EditRoom(room))">Edit</button> <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteRoom(room.Id))" style="margin-left:5px;">Delete</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<RoomDto> Rooms = new();
+    private RoomDto RoomModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRooms();
+    }
+
+    private async Task LoadRooms()
+    {
+        var allRooms = await RoomService.GetAllRoomsAsync();
+        Rooms = allRooms.ToList();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void EditRoom(RoomDto room)
+    {
+        // Copy the data into the RoomModel so we can edit
+        RoomModel = new RoomDto
+        {
+            Id = room.Id,
+            Name = room.Name
+        };
+    }
+
+    private void CancelEdit()
+    {
+        // Clear model to cancel edit
+        RoomModel = new RoomDto();
+    }
+
+    private async Task SaveRoom()
+    {
+        if (RoomModel.Id == Guid.Empty)
+        {
+            // Creating a new room
+            await RoomService.AddRoomAsync(RoomModel);
+        }
+        else
+        {
+            // Updating an existing room
+            await RoomService.UpdateRoomAsync(RoomModel);
+        }
+
+        // Reset after saving
+        RoomModel = new RoomDto();
+        await LoadRooms();
+    }
+
+    private async Task DeleteRoom(Guid id)
+    {
+        await RoomService.DeleteRoomAsync(id);
+        await LoadRooms();
+    }
+
+}

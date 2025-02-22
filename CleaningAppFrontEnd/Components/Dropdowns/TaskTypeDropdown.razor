@@ -1,0 +1,38 @@
+﻿@using CleaningApp.Application.Dtos
+
+<div class="mb-3">
+    <label>Task Type:</label>
+    <select @bind="SelectedTaskTypeId">
+        <option value="@Guid.Empty">-- Select Task Type --</option>
+        @if (TaskTypes != null)
+        {
+            @foreach (var t in TaskTypes)
+            {
+                <option value="@t.Id">@t.Name</option>
+            }
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter] public List<TaskTypeDto> TaskTypes { get; set; } = new();
+
+    // Provide two-way binding for the selected TaskTypeId
+    private Guid _selectedTaskTypeId;
+    [Parameter]
+    public Guid SelectedTaskTypeId
+    {
+        get => _selectedTaskTypeId;
+        set
+        {
+            if (_selectedTaskTypeId != value)
+            {
+                _selectedTaskTypeId = value;
+                SelectedTaskTypeIdChanged.InvokeAsync(value);
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback<Guid> SelectedTaskTypeIdChanged { get; set; }
+}

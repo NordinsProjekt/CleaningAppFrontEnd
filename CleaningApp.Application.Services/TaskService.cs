@@ -145,36 +145,36 @@ public class TaskService(IUnitOfWork unitOfWork)
         await unitOfWork.CompleteAsync();
     }
 
-    public async Task<IEnumerable<RoomDto>> GetAllRoomsAsync()
+    public async Task<List<RoomDto>> GetAllRoomsAsync()
     {
         var rooms = await unitOfWork.Repository<Room>().GetAllAsync();
         return rooms.Select(r => new RoomDto
         {
             Id = r.Id,
             Name = r.Name
-        });
+        }).ToList();
     }
 
     // 2) Get all task types for dropdown
-    public async Task<IEnumerable<TaskTypeDto>> GetAllTaskTypesAsync()
+    public async Task<List<TaskTypeDto>> GetAllTaskTypesAsync()
     {
         var types = await unitOfWork.Repository<TaskType>().GetAllAsync();
         return types.Select(t => new TaskTypeDto
         {
             Id = t.Id,
             Name = t.Name
-        });
+        }).ToList();
     }
 
     // 3) Get all users for dropdown
-    public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+    public async Task<List<UserDto>> GetAllUsersAsync()
     {
         var users = await unitOfWork.Repository<User>().GetAllAsync();
         return users.Select(u => new UserDto
         {
             Id = u.Id,
             Name = u.Name
-        });
+        }).ToList();
     }
 
     public async Task GenerateTasksFromTemplatesForWeekAsync(DateTime weekStart)
