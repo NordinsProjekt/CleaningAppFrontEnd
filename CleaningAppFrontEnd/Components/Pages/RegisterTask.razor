@@ -64,7 +64,7 @@
 }
 
 @code {
-    private TaskDto taskDto = new TaskDto();
+    private CleaningTaskDto taskDto = new CleaningTaskDto();
     private EditContext editContext;
     private string successMessage = string.Empty;
     private string errorMessage = string.Empty;
@@ -93,7 +93,7 @@
             await TaskService.AddTaskAsync(taskDto);
             successMessage = "Task registered successfully!";
             errorMessage = string.Empty;
-            taskDto = new TaskDto();
+            taskDto = new CleaningTaskDto();
             editContext = new EditContext(taskDto); // Reset form context
         }
         catch (Exception ex)

@@ -6,66 +6,51 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace CleaningApp.Domain.Entities;
+
 public class DBEntities
 {
-
 }
 
 public class User
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [Key] public Guid Id { get; set; } = Guid.NewGuid();
 
-    [Required]
-    [MaxLength(100)]
-    public string Name { get; set; } = string.Empty;
+    [Required] [MaxLength(100)] public string Name { get; set; } = string.Empty;
 }
 
 public class Room
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [Key] public Guid Id { get; set; } = Guid.NewGuid();
 
-    [Required]
-    [MaxLength(100)]
-    public string Name { get; set; } = string.Empty;
+    [Required] [MaxLength(100)] public string Name { get; set; } = string.Empty;
 }
 
 public class TaskType
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [Key] public Guid Id { get; set; } = Guid.NewGuid();
 
-    [Required]
-    [MaxLength(100)]
-    public string Name { get; set; } = string.Empty;
+    [Required] [MaxLength(100)] public string Name { get; set; } = string.Empty;
 }
 
-public class Task
+public class CleaningTask
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [Key] public Guid Id { get; set; } = Guid.NewGuid();
 
-    [Required]
-    public Guid UserId { get; set; }
+    [Required] public Guid UserId { get; set; }
     public User User { get; set; } = null!;
 
-    [Required]
-    public Guid RoomId { get; set; }
+    [Required] public Guid RoomId { get; set; }
     public Room Room { get; set; } = null!;
 
-    [Required]
-    public Guid TaskTypeId { get; set; }
+    [Required] public Guid TaskTypeId { get; set; }
     public TaskType TaskType { get; set; } = null!;
 
-    [Required]
-    public DateTime TaskDate { get; set; } = DateTime.UtcNow;
+    [Required] public DateTime TaskDate { get; set; } = DateTime.UtcNow;
 }
 
 public class TaskTemplate
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [Key] public Guid Id { get; set; } = Guid.NewGuid();
 
     public TaskTemplateType TaskDuration { get; set; }
 
@@ -77,17 +62,14 @@ public class TaskTemplate
     public User? DefaultUser { get; set; }
 
     // The normal references to Room and TaskType
-    [Required]
-    public Guid RoomId { get; set; }
+    [Required] public Guid RoomId { get; set; }
     public Room Room { get; set; } = null!;
 
-    [Required]
-    public Guid TaskTypeId { get; set; }
+    [Required] public Guid TaskTypeId { get; set; }
     public TaskType TaskType { get; set; } = null!;
 
     // Optional: Additional info (e.g. "Vacuum living room", "Dust shelves", etc.)
-    [MaxLength(200)]
-    public string Notes { get; set; } = string.Empty;
+    [MaxLength(200)] public string Notes { get; set; } = string.Empty;
 }
 
 public enum TaskTemplateType
@@ -97,5 +79,3 @@ public enum TaskTemplateType
     Quarter,
     Year
 }
-
-

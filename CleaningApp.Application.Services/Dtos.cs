@@ -18,7 +18,7 @@ public class TaskTypeDto
     public string Name { get; set; } = string.Empty;
 }
 
-public class TaskDto
+public class CleaningTaskDto
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
@@ -27,7 +27,7 @@ public class TaskDto
     public DateTime TaskDate { get; set; } = DateTime.UtcNow;
 }
 
-public class TaskViewModel
+public class CleaningTaskViewModel
 {
     public Guid Id { get; set; }
     public string UserName { get; set; } = string.Empty;

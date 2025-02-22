@@ -4,23 +4,14 @@ using CleaningApp.Infrastructure.UnitOfWork;
 
 namespace CleaningApp.Application.Services;
 
-public class TaskService
+public class TaskService(IUnitOfWork unitOfWork)
 {
-    private readonly IUnitOfWork _unitOfWork;
-
-    public TaskService(IUnitOfWork unitOfWork)
+    public async Task<IEnumerable<CleaningTaskViewModel>> GetAllTasksAsync()
     {
-        _unitOfWork = unitOfWork;
-    }
+        var tasks = await unitOfWork.Repository<CleaningTask>()
+            .GetAllAsync(t => t.User, t => t.Room, t => t.TaskType);
 
-    public async Task<IEnumerable<TaskViewModel>> GetAllTasksAsync()
-    {
-        var tasks = await _unitOfWork.Repository<CleaningApp.Domain.Entities.Task>().GetAllAsync(
-            t => t.User,
-            t => t.Room,
-            t => t.TaskType
-        );
-        return tasks.Select(t => new TaskViewModel
+        return tasks.Select(t => new CleaningTaskViewModel
         {
             Id = t.Id,
             UserName = t.User.Name,
@@ -30,22 +21,24 @@ public class TaskService
         });
     }
 
-    public async Task<TaskDto?> GetTaskByIdAsync(Guid id)
+    public async Task<CleaningTaskDto?> GetTaskByIdAsync(Guid id)
     {
-        var task = await _unitOfWork.Repository<Domain.Entities.Task>().GetByIdAsync(id);
-        return task == null ? null : new TaskDto
-        {
-            Id = task.Id,
-            UserId = task.UserId,
-            RoomId = task.RoomId,
-            TaskTypeId = task.TaskTypeId,
-            TaskDate = task.TaskDate
-        };
+        var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(id);
+        return task == null
+            ? null
+            : new CleaningTaskDto
+            {
+                Id = task.Id,
+                UserId = task.UserId,
+                RoomId = task.RoomId,
+                TaskTypeId = task.TaskTypeId,
+                TaskDate = task.TaskDate
+            };
     }
 
-    public async System.Threading.Tasks.Task AddTaskAsync(TaskDto taskDto)
+    public async Task AddTaskAsync(CleaningTaskDto taskDto)
     {
-        var task = new Domain.Entities.Task
+        var task = new CleaningTask
         {
             Id = Guid.NewGuid(),
             UserId = taskDto.UserId,
@@ -53,40 +46,40 @@ public class TaskService
             TaskTypeId = taskDto.TaskTypeId,
             TaskDate = taskDto.TaskDate
         };
-        await _unitOfWork.Repository<Domain.Entities.Task>().AddAsync(task);
-        await _unitOfWork.CompleteAsync();
+        await unitOfWork.Repository<CleaningTask>().AddAsync(task);
+        await unitOfWork.CompleteAsync();
     }
 
-    public async System.Threading.Tasks.Task UpdateTaskAsync(TaskDto taskDto)
+    public async Task UpdateTaskAsync(CleaningTaskDto taskDto)
     {
-        var task = await _unitOfWork.Repository<Domain.Entities.Task>().GetByIdAsync(taskDto.Id);
+        var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskDto.Id);
         if (task != null)
         {
             task.UserId = taskDto.UserId;
             task.RoomId = taskDto.RoomId;
             task.TaskTypeId = taskDto.TaskTypeId;
             task.TaskDate = taskDto.TaskDate;
-            _unitOfWork.Repository<Domain.Entities.Task>().Update(task);
-            await _unitOfWork.CompleteAsync();
+            unitOfWork.Repository<CleaningTask>().Update(task);
+            await unitOfWork.CompleteAsync();
         }
     }
 
-    public async System.Threading.Tasks.Task DeleteTaskAsync(Guid id)
+    public async Task DeleteTaskAsync(Guid id)
     {
-        var task = await _unitOfWork.Repository<Domain.Entities.Task>().GetByIdAsync(id);
+        var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(id);
         if (task != null)
         {
-            _unitOfWork.Repository<Domain.Entities.Task>().Remove(task);
-            await _unitOfWork.CompleteAsync();
+            unitOfWork.Repository<CleaningTask>().Remove(task);
+            await unitOfWork.CompleteAsync();
         }
     }
 
-    public async Task<IEnumerable<TaskViewModel>> GetAllTasksForWeekAsync(DateTime weekStart)
+    public async Task<IEnumerable<CleaningTaskViewModel>> GetAllTasksForWeekAsync(DateTime weekStart)
     {
         var weekEnd = weekStart.AddDays(7);
 
-        var tasks = await _unitOfWork
-            .Repository<CleaningApp.Domain.Entities.Task>()
+        var tasks = await unitOfWork
+            .Repository<CleaningTask>()
             .FindAsync(
                 t => t.TaskDate >= weekStart && t.TaskDate < weekEnd,
                 t => t.User,
@@ -94,7 +87,7 @@ public class TaskService
                 t => t.TaskType
             );
 
-        return tasks.Select(t => new TaskViewModel
+        return tasks.Select(t => new CleaningTaskViewModel
         {
             Id = t.Id,
             UserName = t.User.Name,
@@ -104,30 +97,30 @@ public class TaskService
         });
     }
 
-    public async System.Threading.Tasks.Task AssignTaskAsync(Guid taskId, Guid userId)
+    public async Task AssignTaskAsync(Guid taskId, Guid userId)
     {
-        var task = await _unitOfWork.Repository<Domain.Entities.Task>().GetByIdAsync(taskId);
+        var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskId);
         if (task != null)
         {
             task.UserId = userId;
-            _unitOfWork.Repository<Domain.Entities.Task>().Update(task);
-            await _unitOfWork.CompleteAsync();
+            unitOfWork.Repository<CleaningTask>().Update(task);
+            await unitOfWork.CompleteAsync();
         }
     }
 
     public async Task<UserDto> GetOrCreatePlaneradUserAsync()
     {
-        var userRepo = _unitOfWork.Repository<Domain.Entities.User>();
+        var userRepo = unitOfWork.Repository<User>();
 
         var planeradUser = (await userRepo.FindAsync(u => u.Name == "Planerad")).FirstOrDefault();
         if (planeradUser == null)
         {
-            planeradUser = new Domain.Entities.User
+            planeradUser = new User
             {
                 Name = "Planerad"
             };
             await userRepo.AddAsync(planeradUser);
-            await _unitOfWork.CompleteAsync();
+            await unitOfWork.CompleteAsync();
         }
 
         return new UserDto
@@ -140,21 +133,21 @@ public class TaskService
     public async Task<IEnumerable<TaskTemplate>> GetAllTaskTemplatesAsync()
     {
         // Possibly include Room + TaskType
-        var templates = await _unitOfWork
+        var templates = await unitOfWork
             .Repository<TaskTemplate>()
             .GetAllAsync(t => t.Room, t => t.TaskType, t => t.DefaultUser!);
         return templates;
     }
 
-    public async System.Threading.Tasks.Task AddTaskTemplateAsync(TaskTemplate template)
+    public async Task AddTaskTemplateAsync(TaskTemplate template)
     {
-        await _unitOfWork.Repository<TaskTemplate>().AddAsync(template);
-        await _unitOfWork.CompleteAsync();
+        await unitOfWork.Repository<TaskTemplate>().AddAsync(template);
+        await unitOfWork.CompleteAsync();
     }
 
     public async Task<IEnumerable<RoomDto>> GetAllRoomsAsync()
     {
-        var rooms = await _unitOfWork.Repository<Room>().GetAllAsync();
+        var rooms = await unitOfWork.Repository<Room>().GetAllAsync();
         return rooms.Select(r => new RoomDto
         {
             Id = r.Id,
@@ -165,7 +158,7 @@ public class TaskService
     // 2) Get all task types for dropdown
     public async Task<IEnumerable<TaskTypeDto>> GetAllTaskTypesAsync()
     {
-        var types = await _unitOfWork.Repository<TaskType>().GetAllAsync();
+        var types = await unitOfWork.Repository<TaskType>().GetAllAsync();
         return types.Select(t => new TaskTypeDto
         {
             Id = t.Id,
@@ -176,7 +169,7 @@ public class TaskService
     // 3) Get all users for dropdown
     public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
     {
-        var users = await _unitOfWork.Repository<User>().GetAllAsync();
+        var users = await unitOfWork.Repository<User>().GetAllAsync();
         return users.Select(u => new UserDto
         {
             Id = u.Id,
@@ -184,17 +177,17 @@ public class TaskService
         });
     }
 
-    public async System.Threading.Tasks.Task GenerateTasksFromTemplatesForWeekAsync(DateTime weekStart)
+    public async Task GenerateTasksFromTemplatesForWeekAsync(DateTime weekStart)
     {
         // 1) Fetch all templates (with includes)
-        var allTemplates = await _unitOfWork.Repository<TaskTemplate>()
+        var allTemplates = await unitOfWork.Repository<TaskTemplate>()
             .GetAllAsync(t => t.Room, t => t.TaskType, t => t.DefaultUser);
 
         // 2) For each day in the selected week (0..6)
-        for (int i = 0; i < 7; i++)
+        for (var i = 0; i < 7; i++)
         {
             var currentDate = weekStart.AddDays(i);
-            int dayOfWeekInt = (int)currentDate.DayOfWeek;
+            var dayOfWeekInt = (int)currentDate.DayOfWeek;
             // Sunday=0, Monday=1, etc. (default .NET logic)
 
             // 3) Filter templates for that day
@@ -203,8 +196,8 @@ public class TaskService
             foreach (var template in dayTemplates)
             {
                 // Check if a task with same date + room + task type already exists
-                var existingTasks = await _unitOfWork
-                    .Repository<Domain.Entities.Task>()
+                var existingTasks = await unitOfWork
+                    .Repository<CleaningTask>()
                     .FindAsync(t =>
                         t.TaskDate.Date == currentDate.Date &&
                         t.RoomId == template.RoomId &&
@@ -214,7 +207,7 @@ public class TaskService
                 // If none found, create a new Task
                 if (!existingTasks.Any())
                 {
-                    var newTask = new Domain.Entities.Task
+                    var newTask = new CleaningTask
                     {
                         Id = Guid.NewGuid(),
                         // Use the DefaultUser from template, or fallback to "Planerad"
@@ -223,25 +216,23 @@ public class TaskService
                         TaskTypeId = template.TaskTypeId,
                         TaskDate = currentDate
                     };
-                    await _unitOfWork.Repository<Domain.Entities.Task>().AddAsync(newTask);
+                    await unitOfWork.Repository<CleaningTask>().AddAsync(newTask);
                 }
             }
         }
 
         // 4) Save once after all additions
-        await _unitOfWork.CompleteAsync();
+        await unitOfWork.CompleteAsync();
     }
 
-    public async System.Threading.Tasks.Task DeleteTaskTemplateAsync(Guid templateId)
+    public async Task DeleteTaskTemplateAsync(Guid templateId)
     {
-        var repo = _unitOfWork.Repository<TaskTemplate>();
+        var repo = unitOfWork.Repository<TaskTemplate>();
         var template = await repo.GetByIdAsync(templateId);
         if (template != null)
         {
             repo.Remove(template);
-            await _unitOfWork.CompleteAsync();
+            await unitOfWork.CompleteAsync();
         }
     }
-
-
 }

@@ -7,12 +7,14 @@ namespace CleaningApp.Infrastructure.UnitOfWork;
 public class CleaningDBContext : DbContext
 {
     public CleaningDBContext(DbContextOptions<CleaningDBContext> options)
-                : base(options) { }
+        : base(options)
+    {
+    }
 
     public DbSet<User> Users { get; set; }
     public DbSet<Room> Rooms { get; set; }
     public DbSet<TaskType> TaskTypes { get; set; }
-    public DbSet<Domain.Entities.Task> Tasks { get; set; }
+    public DbSet<CleaningTask> Tasks { get; set; }
     public DbSet<TaskTemplate> TaskTemplates { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,29 +29,29 @@ public class CleaningDBContext : DbContext
 
         // Seed Rooms
         var rooms = new List<Room>
-            {
-                new Room { Id = Guid.NewGuid(), Name = "Vardagsrum" },
-                new Room { Id = Guid.NewGuid(), Name = "Kök" },
-                new Room { Id = Guid.NewGuid(), Name = "Badrum uppe" },
-                new Room { Id = Guid.NewGuid(), Name = "Badrum nere" },
-                new Room { Id = Guid.NewGuid(), Name = "Sovrum" }
-            };
+        {
+            new Room { Id = Guid.NewGuid(), Name = "Vardagsrum" },
+            new Room { Id = Guid.NewGuid(), Name = "Kök" },
+            new Room { Id = Guid.NewGuid(), Name = "Badrum uppe" },
+            new Room { Id = Guid.NewGuid(), Name = "Badrum nere" },
+            new Room { Id = Guid.NewGuid(), Name = "Sovrum" }
+        };
         modelBuilder.Entity<Room>().HasData(rooms);
 
         // Seed TaskTypes
         var taskTypes = new List<TaskType>
-            {
-                new TaskType { Id = Guid.NewGuid(), Name = "Dammsugit golv" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Tvättat golv" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Torkat av alla ytor" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Rengjort badrum" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Bytt sängkläder" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Tömt sopor" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Tömt tvättmaskin" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Startat tvättmaskin" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Tömt diskmaskin" },
-                new TaskType { Id = Guid.NewGuid(), Name = "Startat diskmaskin" }
-            };
+        {
+            new TaskType { Id = Guid.NewGuid(), Name = "Dammsugit golv" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Tvättat golv" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Torkat av alla ytor" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Rengjort badrum" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Bytt sängkläder" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Tömt sopor" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Tömt tvättmaskin" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Startat tvättmaskin" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Tömt diskmaskin" },
+            new TaskType { Id = Guid.NewGuid(), Name = "Startat diskmaskin" }
+        };
         modelBuilder.Entity<TaskType>().HasData(taskTypes);
     }
 }
