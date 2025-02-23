@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleaningApp.Domain.Entities
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleaningApp.Application.Services", "CleaningApp.Application.Services\CleaningApp.Application.Services.csproj", "{61B93D3C-BA69-4D42-9FAB-EB48DC59EC90}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleaningApp.Application.Service.Tests", "CleaningApp.Application.Service.Tests\CleaningApp.Application.Service.Tests.csproj", "{D9DEB175-1E28-4E88-A15D-CDA1C34841A7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleaningApp.Infrastructure.UnitofWork.Tests", "CleaningApp.Infrastructure.UnitofWork.Tests\CleaningApp.Infrastructure.UnitofWork.Tests.csproj", "{72A239D6-D360-4978-B106-B1F34BF7669A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{61B93D3C-BA69-4D42-9FAB-EB48DC59EC90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61B93D3C-BA69-4D42-9FAB-EB48DC59EC90}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61B93D3C-BA69-4D42-9FAB-EB48DC59EC90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9DEB175-1E28-4E88-A15D-CDA1C34841A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9DEB175-1E28-4E88-A15D-CDA1C34841A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9DEB175-1E28-4E88-A15D-CDA1C34841A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9DEB175-1E28-4E88-A15D-CDA1C34841A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72A239D6-D360-4978-B106-B1F34BF7669A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72A239D6-D360-4978-B106-B1F34BF7669A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72A239D6-D360-4978-B106-B1F34BF7669A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72A239D6-D360-4978-B106-B1F34BF7669A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

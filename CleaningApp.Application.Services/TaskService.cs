@@ -25,6 +25,7 @@ public class TaskService(IUnitOfWork unitOfWork)
     public async Task<CleaningTaskDto?> GetTaskByIdAsync(Guid id)
     {
         var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(id);
+        if (task is null) return null;
 
         return new CleaningTaskDto
         {
@@ -47,6 +48,7 @@ public class TaskService(IUnitOfWork unitOfWork)
     public async Task UpdateTaskAsync(CleaningTaskDto taskDto)
     {
         var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskDto.Id);
+        if (task is null) return;
 
         task.UpdateFromDto(taskDto);
 
@@ -57,9 +59,11 @@ public class TaskService(IUnitOfWork unitOfWork)
     public async Task DeleteTaskAsync(Guid id)
     {
         var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(id);
-
-        unitOfWork.Repository<CleaningTask>().Remove(task);
-        await unitOfWork.CompleteAsync();
+        if (task != null)
+        {
+            unitOfWork.Repository<CleaningTask>().Remove(task);
+            await unitOfWork.CompleteAsync();
+        }
     }
 
     public async Task<IEnumerable<CleaningTaskViewModel>> GetAllTasksForWeekAsync(DateTime weekStart)
