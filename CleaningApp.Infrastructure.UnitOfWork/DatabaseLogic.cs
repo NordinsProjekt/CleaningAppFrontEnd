@@ -22,7 +22,7 @@ public interface IRepository<T> where T : class
     Task<int> SaveChangesAsync();
 }
 
-public class GenericRepository<T>(TestDbContext context) : IRepository<T>
+public class GenericRepository<T>(CleaningDBContext context) : IRepository<T>
     where T : class
 {
     private readonly DbSet<T> _dbSet = context.Set<T>();
