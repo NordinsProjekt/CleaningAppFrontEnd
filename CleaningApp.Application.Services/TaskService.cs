@@ -1,6 +1,7 @@
 ﻿using CleaningApp.Application.Dtos;
 using CleaningApp.Domain.Entities;
 using CleaningApp.Infrastructure.UnitOfWork;
+using TaskStatus = CleaningApp.Domain.Entities.TaskStatus;
 
 namespace CleaningApp.Application.Services;
 
@@ -24,54 +25,41 @@ public class TaskService(IUnitOfWork unitOfWork)
     public async Task<CleaningTaskDto?> GetTaskByIdAsync(Guid id)
     {
         var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(id);
-        return task == null
-            ? null
-            : new CleaningTaskDto
-            {
-                Id = task.Id,
-                UserId = task.UserId,
-                RoomId = task.RoomId,
-                TaskTypeId = task.TaskTypeId,
-                TaskDate = task.TaskDate
-            };
+
+        return new CleaningTaskDto
+        {
+            Id = task.Id,
+            UserId = task.UserId,
+            RoomId = task.RoomId,
+            TaskTypeId = task.TaskTypeId,
+            TaskDate = task.TaskDate
+        };
     }
 
     public async Task AddTaskAsync(CleaningTaskDto taskDto)
     {
-        var task = new CleaningTask
-        {
-            Id = Guid.NewGuid(),
-            UserId = taskDto.UserId,
-            RoomId = taskDto.RoomId,
-            TaskTypeId = taskDto.TaskTypeId,
-            TaskDate = taskDto.TaskDate
-        };
-        await unitOfWork.Repository<CleaningTask>().AddAsync(task);
+        var newTask = taskDto.ToEntity();
+
+        await unitOfWork.Repository<CleaningTask>().AddAsync(newTask);
         await unitOfWork.CompleteAsync();
     }
 
     public async Task UpdateTaskAsync(CleaningTaskDto taskDto)
     {
         var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskDto.Id);
-        if (task != null)
-        {
-            task.UserId = taskDto.UserId;
-            task.RoomId = taskDto.RoomId;
-            task.TaskTypeId = taskDto.TaskTypeId;
-            task.TaskDate = taskDto.TaskDate;
-            unitOfWork.Repository<CleaningTask>().Update(task);
-            await unitOfWork.CompleteAsync();
-        }
+
+        task.UpdateFromDto(taskDto);
+
+        unitOfWork.Repository<CleaningTask>().Update(task);
+        await unitOfWork.CompleteAsync();
     }
 
     public async Task DeleteTaskAsync(Guid id)
     {
         var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(id);
-        if (task != null)
-        {
-            unitOfWork.Repository<CleaningTask>().Remove(task);
-            await unitOfWork.CompleteAsync();
-        }
+
+        unitOfWork.Repository<CleaningTask>().Remove(task);
+        await unitOfWork.CompleteAsync();
     }
 
     public async Task<IEnumerable<CleaningTaskViewModel>> GetAllTasksForWeekAsync(DateTime weekStart)
@@ -87,25 +75,16 @@ public class TaskService(IUnitOfWork unitOfWork)
                 t => t.TaskType
             );
 
-        return tasks.Select(t => new CleaningTaskViewModel
-        {
-            Id = t.Id,
-            UserName = t.User.Name,
-            RoomName = t.Room.Name,
-            TaskTypeName = t.TaskType.Name,
-            TaskDate = t.TaskDate
-        });
+        return tasks.Select(t => t.ToViewModel());
     }
 
     public async Task AssignTaskAsync(Guid taskId, Guid userId)
     {
         var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskId);
-        if (task != null)
-        {
-            task.UserId = userId;
-            unitOfWork.Repository<CleaningTask>().Update(task);
-            await unitOfWork.CompleteAsync();
-        }
+
+        task.UserId = userId;
+        unitOfWork.Repository<CleaningTask>().Update(task);
+        await unitOfWork.CompleteAsync();
     }
 
     public async Task<UserDto> GetOrCreatePlaneradUserAsync()
@@ -113,15 +92,21 @@ public class TaskService(IUnitOfWork unitOfWork)
         var userRepo = unitOfWork.Repository<User>();
 
         var planeradUser = (await userRepo.FindAsync(u => u.Name == "Planerad")).FirstOrDefault();
-        if (planeradUser == null)
-        {
-            planeradUser = new User
+
+        if (planeradUser != null)
+            return new UserDto
             {
-                Name = "Planerad"
+                Id = planeradUser.Id,
+                Name = planeradUser.Name
             };
-            await userRepo.AddAsync(planeradUser);
-            await unitOfWork.CompleteAsync();
-        }
+
+        planeradUser = new User
+        {
+            Name = "Planerad"
+        };
+
+        await userRepo.AddAsync(planeradUser);
+        await unitOfWork.CompleteAsync();
 
         return new UserDto
         {
@@ -177,62 +162,90 @@ public class TaskService(IUnitOfWork unitOfWork)
         }).ToList();
     }
 
-    public async Task GenerateTasksFromTemplatesForWeekAsync(DateTime weekStart)
+    public async Task GenerateTasksFromTemplatesAsync(DateTime startDate, DateTime endDate)
     {
-        // 1) Fetch all templates (with includes)
+        // 1) Get all templates (with includes)
         var allTemplates = await unitOfWork.Repository<TaskTemplate>()
             .GetAllAsync(t => t.Room, t => t.TaskType, t => t.DefaultUser);
 
-        // 2) For each day in the selected week (0..6)
-        for (var i = 0; i < 7; i++)
+        // 2) For each date in [startDate .. endDate)
+        var currentDate = startDate.Date;
+        while (currentDate < endDate)
         {
-            var currentDate = weekStart.AddDays(i);
-            var dayOfWeekInt = (int)currentDate.DayOfWeek;
-            // Sunday=0, Monday=1, etc. (default .NET logic)
-
-            // 3) Filter templates for that day
-            var dayTemplates = allTemplates.Where(tt => tt.DayOfWeek == dayOfWeekInt);
-
-            foreach (var template in dayTemplates)
+            foreach (var template in allTemplates)
             {
-                // Check if a task with same date + room + task type already exists
-                var existingTasks = await unitOfWork
-                    .Repository<CleaningTask>()
-                    .FindAsync(t =>
-                        t.TaskDate.Date == currentDate.Date &&
-                        t.RoomId == template.RoomId &&
-                        t.TaskTypeId == template.TaskTypeId
-                    );
-
-                // If none found, create a new Task
-                if (!existingTasks.Any())
+                switch (template.TaskDuration)
                 {
-                    var newTask = new CleaningTask
-                    {
-                        Id = Guid.NewGuid(),
-                        // Use the DefaultUser from template, or fallback to "Planerad"
-                        UserId = template.DefaultUserId ?? Guid.Empty,
-                        RoomId = template.RoomId,
-                        TaskTypeId = template.TaskTypeId,
-                        TaskDate = currentDate
-                    };
-                    await unitOfWork.Repository<CleaningTask>().AddAsync(newTask);
+                    case TaskTemplateType.Week:
+                        if ((int)currentDate.DayOfWeek == template.DayOfWeek)
+                        {
+                            await CreateTaskIfNotExists(template, currentDate);
+                        }
+
+                        break;
+
+                    case TaskTemplateType.Month:
+                        if (currentDate.Day == template.DayOfMonth)
+                        {
+                            await CreateTaskIfNotExists(template, currentDate);
+                        }
+
+                        break;
+
+                    // etc.
                 }
             }
+
+            currentDate = currentDate.AddDays(1);
         }
 
-        // 4) Save once after all additions
         await unitOfWork.CompleteAsync();
     }
+
+    private async Task CreateTaskIfNotExists(TaskTemplate template, DateTime date)
+    {
+        // Check if a task with same date, room, task type already exists
+        var existingTasks = await unitOfWork.Repository<CleaningTask>().FindAsync(
+            t => t.TaskDate.Date == date.Date
+                 && t.RoomId == template.RoomId
+                 && t.TaskTypeId == template.TaskTypeId
+        );
+        if (!existingTasks.Any())
+        {
+            var newTask = new CleaningTask
+            {
+                Id = Guid.NewGuid(),
+                // If you store the status:
+                Status = TaskStatus.Planning,
+                // default user or some "Planning" user
+                UserId = template.DefaultUserId ?? Guid.Empty,
+                RoomId = template.RoomId,
+                TaskTypeId = template.TaskTypeId,
+                TaskDate = date
+            };
+            await unitOfWork.Repository<CleaningTask>().AddAsync(newTask);
+        }
+    }
+
+    public async Task ChangeUserAsync(Guid taskId, Guid newUserId)
+    {
+        var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskId);
+
+        if (task.Status == TaskStatus.Planning)
+        {
+            task.UserId = newUserId;
+            unitOfWork.Repository<CleaningTask>().Update(task);
+            await unitOfWork.CompleteAsync();
+        }
+    }
+
 
     public async Task DeleteTaskTemplateAsync(Guid templateId)
     {
         var repo = unitOfWork.Repository<TaskTemplate>();
         var template = await repo.GetByIdAsync(templateId);
-        if (template != null)
-        {
-            repo.Remove(template);
-            await unitOfWork.CompleteAsync();
-        }
+
+        repo.Remove(template);
+        await unitOfWork.CompleteAsync();
     }
 }

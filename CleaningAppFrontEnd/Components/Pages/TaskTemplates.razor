@@ -1,26 +1,53 @@
 ﻿@page "/task-templates"
 @using CleaningApp.Application.Dtos
-@using CleaningApp.Application.Services
 @using CleaningApp.Domain.Entities
+@using CleaningApp.Application.Services
 @using CleaningAppFrontEnd.Components.Dropdowns
 @inject TaskService TaskService
 @rendermode InteractiveServer
 
-<h3>Task Templates (Presets)</h3>
+<h3>Task Templates</h3>
 
-<DayOfWeekDropdown @bind-DayOfWeekValue="newTemplateDay" />
+<!-- CHOOSE TaskDuration -->
+<div class="mb-3">
+    <label>Task Duration:</label>
+    <select @bind="newTaskDuration">
+        <option value="@TaskTemplateType.Week">Weekly</option>
+        <option value="@TaskTemplateType.Month">Monthly</option>
+        <option value="@TaskTemplateType.Quarter">Quarterly</option>
+        <option value="@TaskTemplateType.Year">Yearly</option>
+    </select>
 
-<RoomDropdown Rooms="rooms"
-              @bind-SelectedRoomId="selectedRoomId" />
+    <p>Selected: @newTaskDuration</p>
+</div>
 
-<TaskTypeDropdown 
-    TaskTypes="taskTypes" 
-    @bind-SelectedTaskTypeId="selectedTaskTypeId"/>
+<!-- Conditionally show DayOfWeek or DayOfMonth -->
+@if (newTaskDuration == TaskTemplateType.Week)
+{
+    <DayOfWeekDropdown @bind-DayOfWeekValue="newTemplateDayOfWeek" />
+}
+else if (newTaskDuration == TaskTemplateType.Month)
+{
+    <div class="mb-3">
+        <label>Day of Month (1..31):</label>
+        <input type="number" @bind="newTemplateDayOfMonth" min="1" max="31" />
+    </div>
+}
 
-<UserDropdown Users="users"
-              @bind-SelectedUserId="selectedUserId" />
+<!-- Room & Task Type -->
+<RoomDropdown Rooms="rooms" @bind-SelectedRoomId="selectedRoomId" />
+<TaskTypeDropdown TaskTypes="taskTypes" @bind-SelectedTaskTypeId="selectedTaskTypeId" />
 
-<button @onclick="AddNewTemplate">Add Template</button>
+<!-- Default user (optional) -->
+<UserDropdown Users="users" @bind-SelectedUserId="selectedUserId" />
+
+<!-- Additional notes -->
+<div class="mb-3">
+    <label>Notes:</label>
+    <textarea @bind="newTemplateNotes"></textarea>
+</div>
+
+<button class="btn btn-primary" @onclick="AddNewTemplate">Add Template</button>
 
 <hr />
 
@@ -30,94 +57,109 @@
 }
 else
 {
-    <table>
+    <table class="table">
         <thead>
             <tr>
-                <th>DayOfWeek</th>
+                <th>Duration</th>
+                <th>DaySpec</th>
                 <th>Room</th>
                 <th>TaskType</th>
-                <th>DefaultUser</th>
-                <th>Actions</th>
+                <th>Default User</th>
+                <th>Notes</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var template in taskTemplates)
-            {
-                <tr>
-                    <td>@((DayOfWeek)template.DayOfWeek)</td>
-                    <td>@template.Room.Name</td>
-                    <td>@template.TaskType.Name</td>
-                    <td>@(template.DefaultUser?.Name ?? "N/A")</td>
-                    <td>
-                        <!-- Possibly add "Delete" or "Edit" actions here -->
-                        <button @onclick="@(() => DeleteTemplate(template.Id))">Delete</button>
-                    </td>
-                </tr>
-            }
+        @foreach (var template in taskTemplates)
+        {
+            <tr>
+                <td>@template.TaskDuration</td>
+                <td>
+                    @if (template.TaskDuration == TaskTemplateType.Week)
+                    {
+                        @( (DayOfWeek?) template.DayOfWeek ?? DayOfWeek.Sunday)
+                    }
+                    else if (template.TaskDuration == TaskTemplateType.Month)
+                    {
+                        @template.DayOfMonth
+                    }
+                    else
+                    {
+                        <!-- etc. -->
+                    }
+                </td>
+                <td>@template.Room?.Name</td>
+                <td>@template.TaskType?.Name</td>
+                <td>@(template.DefaultUser?.Name ?? "N/A")</td>
+                <td>@template.Notes</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteTemplate(template.Id))">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        }
         </tbody>
     </table>
 }
 
 @code {
-    // Collections for dropdowns
-    private List<RoomDto>? rooms;
-    private List<TaskTypeDto>? taskTypes;
-    private List<UserDto>? users;
-
-    // Templates already in the DB
-    private IEnumerable<TaskTemplate>? taskTemplates;
-
     // Fields for new template
-    private int newTemplateDay = 0; // Sunday by default
+    private TaskTemplateType newTaskDuration = TaskTemplateType.Week;
+    private int newTemplateDayOfWeek = 0; // Sunday
+    private int newTemplateDayOfMonth = 1; // For monthly
     private Guid selectedRoomId;
     private Guid selectedTaskTypeId;
     private Guid selectedUserId;
     private string newTemplateNotes = string.Empty;
 
-    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    // Data
+    private List<RoomDto>? rooms;
+    private List<TaskTypeDto>? taskTypes;
+    private List<UserDto>? users;
+    private IEnumerable<TaskTemplate>? taskTemplates;
+
+    protected override async Task OnInitializedAsync()
     {
-        // Load data for dropdowns
         rooms = await TaskService.GetAllRoomsAsync();
         taskTypes = await TaskService.GetAllTaskTypesAsync();
         users = await TaskService.GetAllUsersAsync();
 
-        // Load existing templates
         taskTemplates = await TaskService.GetAllTaskTemplatesAsync();
     }
 
-    private async System.Threading.Tasks.Task AddNewTemplate()
+    private async Task AddNewTemplate()
     {
-        // Create a new TaskTemplate (domain entity or a TaskTemplateDto)
         var newTemplate = new TaskTemplate
-            {
-                DayOfWeek = newTemplateDay,
-                RoomId = selectedRoomId,
-                TaskTypeId = selectedTaskTypeId,
-                DefaultUserId = (selectedUserId == Guid.Empty) ? null : selectedUserId,
-                Notes = newTemplateNotes
-            };
+        {
+            Id = Guid.NewGuid(),
+            TaskDuration = newTaskDuration,
+            DayOfWeek = (newTaskDuration == TaskTemplateType.Week) ? newTemplateDayOfWeek : 0,
+            DayOfMonth = (newTaskDuration == TaskTemplateType.Month) ? newTemplateDayOfMonth : 1,
+            DefaultUserId = (selectedUserId == Guid.Empty) ? null : selectedUserId,
+            RoomId = selectedRoomId,
+            TaskTypeId = selectedTaskTypeId,
+            Notes = newTemplateNotes
+        };
 
         await TaskService.AddTaskTemplateAsync(newTemplate);
 
-        // Reload the list
+        // Reload
         taskTemplates = await TaskService.GetAllTaskTemplatesAsync();
 
-        // Reset fields if you like
-        newTemplateDay = 0;
+        // Reset fields
+        newTaskDuration = TaskTemplateType.Week;
+        newTemplateDayOfWeek = 0;
+        newTemplateDayOfMonth = 1;
         selectedRoomId = Guid.Empty;
         selectedTaskTypeId = Guid.Empty;
         selectedUserId = Guid.Empty;
         newTemplateNotes = string.Empty;
-
-        await InvokeAsync(StateHasChanged);
     }
 
-    private async System.Threading.Tasks.Task DeleteTemplate(Guid templateId)
+    private async Task DeleteTemplate(Guid templateId)
     {
-        // Call TaskService method
         await TaskService.DeleteTaskTemplateAsync(templateId);
-
-        // Reload templates
         taskTemplates = await TaskService.GetAllTaskTemplatesAsync();
     }
 }

@@ -11,6 +11,13 @@ public class DBEntities
 {
 }
 
+public enum TaskStatus
+{
+    Planning,
+    Assigned,
+    Completed
+}
+
 public class User
 {
     [Key] public Guid Id { get; set; } = Guid.NewGuid();
@@ -46,6 +53,7 @@ public class CleaningTask
     public TaskType TaskType { get; set; } = null!;
 
     [Required] public DateTime TaskDate { get; set; } = DateTime.UtcNow;
+    public TaskStatus Status { get; set; } = TaskStatus.Planning;
 }
 
 public class TaskTemplate
@@ -55,7 +63,10 @@ public class TaskTemplate
     public TaskTemplateType TaskDuration { get; set; }
 
     // Which day is this template for? Sunday=0, Monday=1, etc.
-    public int DayOfWeek { get; set; }
+    public int? DayOfWeek { get; set; }
+
+    // For monthly tasks (e.g. “the 5th of every month”):
+    public int? DayOfMonth { get; set; }
 
     // If you want a default assigned user (e.g. Planerad)
     public Guid? DefaultUserId { get; set; }

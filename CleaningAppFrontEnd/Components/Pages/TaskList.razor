@@ -1,75 +1,86 @@
 ﻿@page "/task-list"
-@using CleaningApp.Application.Dtos;
-@using CleaningApp.Application.Services;
+@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
 @inject TaskService TaskService
+@rendermode InteractiveServer
 
 <h3>Task List</h3>
 
 <div>
-    <label for="filter">Filter by User:</label>
-    <InputText @bind-Value="filterUser" class="form-control" />
+    <label>User Filter:</label>
+    <InputText @bind-Value="filterUser" />
+    <button @onclick="LoadTasks">Apply</button>
 </div>
-
-<div>
-    <label for="sort">Sort by:</label>
-    <select @bind="sortOption" class="form-control">
-        <option value="date">Date</option>
-        <option value="user">User</option>
-        <option value="room">Room</option>
-    </select>
-</div>
-
-<button class="btn btn-primary" @onclick="LoadTasks">Apply</button>
 
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>User</th>
-            <th>Room</th>
-            <th>Task Type</th>
             <th>Date</th>
+            <th>Room</th>
+            <th>TaskType</th>
+            <th>Status</th>
+            <th>Assigned User</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var task in filteredTasks)
+        @if (tasks != null)
         {
-            <tr>
-                <td>@task.UserName</td>
-                <td>@task.RoomName</td>
-                <td>@task.TaskTypeName</td>
-                <td>@task.TaskDate</td>
-            </tr>
+            @foreach (var task in tasks)
+            {
+                <tr>
+                    <td>@task.TaskDate.ToShortDateString()</td>
+                    <td>@task.RoomName</td>
+                    <td>@task.TaskTypeName</td>
+                    <td>@task.Status</td>
+                    <td>
+                        @if (task.Status == CleaningApp.Domain.Entities.TaskStatus.Planning)
+                        {
+                            <select @onchange="@(async e => await ReassignUser(task.Id, e.Value.ToString()))">
+                                <option value="">--Select user--</option>
+                                @foreach (var user in allUsers)
+                                {
+                                    <option value="@user.Id">@user.Name</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            @task.UserName
+                        }
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>
 
 @code {
     private List<CleaningTaskViewModel> tasks = new();
-    private List<CleaningTaskViewModel> filteredTasks = new();
+    private List<UserDto> allUsers = new();
     private string filterUser = string.Empty;
-    private string sortOption = "date";
 
     protected override async Task OnInitializedAsync()
     {
+        allUsers = await TaskService.GetAllUsersAsync();
         await LoadTasks();
     }
 
     private async Task LoadTasks()
     {
-        tasks = (await TaskService.GetAllTasksAsync()).ToList();
-        ApplyFilterAndSort();
+        var allTasks = await TaskService.GetAllTasksAsync();
+        tasks = allTasks
+            .Where(t => string.IsNullOrEmpty(filterUser)
+                        || t.UserName.Contains(filterUser, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(t => t.TaskDate)
+            .ToList();
     }
 
-    private void ApplyFilterAndSort()
+    private async Task ReassignUser(Guid taskId, string userIdString)
     {
-        filteredTasks = tasks
-            .Where(t => string.IsNullOrEmpty(filterUser) || t.UserName.ToString().Contains(filterUser, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(t => sortOption switch
-            {
-                "user" => (object)t.UserName,
-                "room" => (object)t.RoomName,
-                _ => (object)t.TaskDate
-            })
-            .ToList();
+        if (Guid.TryParse(userIdString, out var userId))
+        {
+            await TaskService.ChangeUserAsync(taskId, userId);
+            await LoadTasks(); // refresh
+        }
     }
 }

@@ -34,4 +34,7 @@ public class CleaningTaskViewModel
     public string RoomName { get; set; } = string.Empty;
     public string TaskTypeName { get; set; } = string.Empty;
     public DateTime TaskDate { get; set; } = DateTime.UtcNow;
+
+    public CleaningApp.Domain.Entities.TaskStatus Status { get; set; } =
+        CleaningApp.Domain.Entities.TaskStatus.Planning;
 }

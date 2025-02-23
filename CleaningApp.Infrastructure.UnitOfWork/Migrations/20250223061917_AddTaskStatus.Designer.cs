@@ -4,6 +4,7 @@ using CleaningApp.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CleaningApp.Infrastructure.UnitOfWork.Migrations
 {
     [DbContext(typeof(CleaningDBContext))]
-    partial class CleaningDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250223061917_AddTaskStatus")]
+    partial class AddTaskStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,27 +75,27 @@ namespace CleaningApp.Infrastructure.UnitOfWork.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("83003226-c550-42ba-b2f1-a1ff2fd6dee2"),
+                            Id = new Guid("48cd1f9b-d5b0-463f-809f-d1bbea8ad32a"),
                             Name = "Vardagsrum"
                         },
                         new
                         {
-                            Id = new Guid("7a11bb98-3e4e-42c7-bccc-3dd3d564f995"),
+                            Id = new Guid("4f254314-1bc2-435d-9b29-624a89fee683"),
                             Name = "Kök"
                         },
                         new
                         {
-                            Id = new Guid("c5c2f4da-017a-4f95-b707-c40884d48823"),
+                            Id = new Guid("631082be-81d6-45ce-851f-a8dcf96593d9"),
                             Name = "Badrum uppe"
                         },
                         new
                         {
-                            Id = new Guid("f3c3d903-b31a-480d-be93-c051a7ccc051"),
+                            Id = new Guid("dad70fd7-60e0-46af-acf4-d9eeeecdca67"),
                             Name = "Badrum nere"
                         },
                         new
                         {
-                            Id = new Guid("f52a0448-2d6e-4258-b6b9-e55b9cfccc94"),
+                            Id = new Guid("04a3f41c-ef09-42ca-aa8a-33eb73d588a1"),
                             Name = "Sovrum"
                         });
                 });
@@ -103,10 +106,7 @@ namespace CleaningApp.Infrastructure.UnitOfWork.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<int?>("DayOfMonth")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("DayOfWeek")
+                    b.Property<int>("DayOfWeek")
                         .HasColumnType("int");
 
                     b.Property<Guid?>("DefaultUserId")
@@ -155,52 +155,52 @@ namespace CleaningApp.Infrastructure.UnitOfWork.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("3164d4ea-646d-4b7d-883b-bc0b57b77c93"),
+                            Id = new Guid("c2999c71-25b4-4fd5-9b47-11ad5c58d1cc"),
                             Name = "Dammsugit golv"
                         },
                         new
                         {
-                            Id = new Guid("2524e676-bca2-4d2c-abec-8df7668182f0"),
+                            Id = new Guid("c155d51d-f6b6-40bd-bcbf-b1593a79a2e0"),
                             Name = "Tvättat golv"
                         },
                         new
                         {
-                            Id = new Guid("b576d6fb-e1db-42b8-8703-afc12fc428ad"),
+                            Id = new Guid("216a50f1-f5bf-4dbe-bda9-5497464a9393"),
                             Name = "Torkat av alla ytor"
                         },
                         new
                         {
-                            Id = new Guid("7113fe97-5d7d-436d-9086-5cd89db366c8"),
+                            Id = new Guid("afdf8411-fa94-4b3b-b239-3e9ec397d454"),
                             Name = "Rengjort badrum"
                         },
                         new
                         {
-                            Id = new Guid("792e66ad-478c-48f6-bb2e-086849cbf0f8"),
+                            Id = new Guid("987aec0a-f24c-4149-a2a4-8cecd90d3231"),
                             Name = "Bytt sängkläder"
                         },
                         new
                         {
-                            Id = new Guid("ace1e44f-6f5d-40d5-9178-8e9b71ed60ea"),
+                            Id = new Guid("7c1c6388-81b3-44d8-9e8b-db4235dc9c9e"),
                             Name = "Tömt sopor"
                         },
                         new
                         {
-                            Id = new Guid("e627ce1d-8dab-4581-b2df-5f305cf581cf"),
+                            Id = new Guid("c3f79b26-ff10-4807-8a41-81e2374e34b1"),
                             Name = "Tömt tvättmaskin"
                         },
                         new
                         {
-                            Id = new Guid("5051dfb0-8447-4654-b931-a2cf9516998d"),
+                            Id = new Guid("cfe17e50-caf4-4638-bcf7-3df365dd6396"),
                             Name = "Startat tvättmaskin"
                         },
                         new
                         {
-                            Id = new Guid("6aa00f5a-3756-4fbd-80ae-70b0e4684dcf"),
+                            Id = new Guid("52a2c583-f5cd-4e08-a103-b2833059258f"),
                             Name = "Tömt diskmaskin"
                         },
                         new
                         {
-                            Id = new Guid("09ab5645-27ef-43f7-80b3-b9197b612dd9"),
+                            Id = new Guid("90b9d9e1-c695-4a9f-a2d8-905e301a8c57"),
                             Name = "Startat diskmaskin"
                         });
                 });
@@ -223,17 +223,17 @@ namespace CleaningApp.Infrastructure.UnitOfWork.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("52785979-7ea9-49c8-a4a4-037fc01ec008"),
+                            Id = new Guid("95fca50d-c790-4f47-ac33-09b98f31c590"),
                             Name = "Markus"
                         },
                         new
                         {
-                            Id = new Guid("b8150fea-4773-45b6-87a9-9b335c818081"),
+                            Id = new Guid("27714a73-fe87-4515-aad1-f5f19aedaca2"),
                             Name = "Cecilia"
                         },
                         new
                         {
-                            Id = new Guid("8c04a24e-f0f3-47be-949e-b2631657cddc"),
+                            Id = new Guid("fb9d54be-8417-49d3-abe0-212f55fba6a5"),
                             Name = "Planerad"
                         });
                 });

@@ -1,7 +1,61 @@
 ﻿@page "/"
+@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
+@using CleaningAppFrontEnd.Components.Dropdowns
+@inject TaskService TaskService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Front Page</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1 class="frontpage-title">Welcome to the Cleaning App!</h1>
 
-Welcome to your new app.
+<p>
+    Below is a quick demo of our new components:
+</p>
+
+<hr />
+
+<div class="components-demo">
+    <h3>Pick a day of the week</h3>
+    <DayOfWeekDropdown @bind-DayOfWeekValue="selectedDayOfWeek" />
+
+    <h3>Pick a Room</h3>
+    <RoomDropdown Rooms="rooms"
+                  @bind-SelectedRoomId="selectedRoomId" />
+
+    <h3>Pick a Task Type</h3>
+    <TaskTypeDropdown TaskTypes="taskTypes"
+                      @bind-SelectedTaskTypeId="selectedTaskTypeId" />
+
+    <h3>Pick a Default User</h3>
+    <UserDropdown Users="users"
+                  @bind-SelectedUserId="selectedUserId" />
+</div>
+
+<hr />
+
+<div class="frontpage-instructions">
+    <p>
+        Explore the menu on the left to manage tasks, create templates, and more. 
+        You can also register a task or plan your entire week!
+    </p>
+</div>
+
+@code {
+    // Fields backing the dropdown components
+    private int selectedDayOfWeek;
+    private Guid selectedRoomId;
+    private Guid selectedTaskTypeId;
+    private Guid selectedUserId;
+
+    // Collections for the dropdowns
+    private List<RoomDto> rooms = new();
+    private List<TaskTypeDto> taskTypes = new();
+    private List<UserDto> users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        rooms = await TaskService.GetAllRoomsAsync(); 
+        taskTypes = await TaskService.GetAllTaskTypesAsync();
+        users = await TaskService.GetAllUsersAsync();
+    }
+}
