@@ -14,12 +14,8 @@ namespace CleaningApp.FrontEnd.Tests;
 
 public class FrontendUnittests
 {
-    private IUnitOfWork _unitOfWorkMock;
-
     public FrontendUnittests()
     {
-        // 1) Create the mock
-        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
     }
 
     public class DayOfWeekDropdownTests : TestContext
@@ -392,6 +388,138 @@ public class FrontendUnittests
                 // 3) TaskType <select>
                 var taskTypeOptions = selects[2].QuerySelectorAll("option");
                 Assert.Equal(2, taskTypeOptions.Count()); // "Select a Task Type" + "Mopping"
+            }
+        }
+
+        public class TaskListTests : TestContext
+        {
+            private readonly TaskService _taskServiceMock;
+            private readonly List<CleaningTaskViewModel> _mockTasks;
+            private readonly List<UserDto> _mockUsers;
+
+            public TaskListTests()
+            {
+                // Create a NSubstitute mock for TaskService
+                _taskServiceMock = Substitute.For<TaskService>((null as object)!);
+
+                // Register it with the bUnit DI container,
+                // so the TaskList component will inject this mock.
+                Services.AddSingleton(_taskServiceMock);
+
+                // Prepare some fake data
+                _mockTasks = new List<CleaningTaskViewModel>
+                {
+                    new CleaningTaskViewModel
+                    {
+                        Id = Guid.NewGuid(),
+                        UserName = "Alice",
+                        RoomName = "Kitchen",
+                        TaskTypeName = "Mopping",
+                        TaskDate = new DateTime(2025, 1, 1),
+                        Status = CleaningApp.Domain.Entities.TaskStatus.Planning
+                    },
+                    new CleaningTaskViewModel
+                    {
+                        Id = Guid.NewGuid(),
+                        UserName = "Bob",
+                        RoomName = "Living Room",
+                        TaskTypeName = "Dusting",
+                        TaskDate = new DateTime(2025, 1, 2),
+                        Status = CleaningApp.Domain.Entities.TaskStatus.Assigned
+                    }
+                };
+
+                _mockUsers = new List<UserDto>
+                {
+                    new UserDto { Id = Guid.NewGuid(), Name = "Alice" },
+                    new UserDto { Id = Guid.NewGuid(), Name = "Bob" },
+                    new UserDto { Id = Guid.NewGuid(), Name = "Charlie" }
+                };
+            }
+
+            [Fact]
+            public void TaskList_ShowsTasksInTable()
+            {
+                // Arrange
+                // Configure the mock to return our fake tasks and users
+                _taskServiceMock.GetAllTasksAsync().Returns(_mockTasks);
+                _taskServiceMock.GetAllUsersAsync().Returns(_mockUsers);
+
+                // Act
+                var cut = RenderComponent<TaskList>();
+
+                // Wait for tasks to load
+                cut.WaitForState(() => cut.FindAll("tbody tr").Count > 0);
+
+                // Assert
+                var rows = cut.FindAll("tbody tr");
+                Assert.Equal(2, rows.Count); // We have 2 tasks in _mockTasks
+
+                // Basic checks:
+                Assert.Contains("Alice", rows[0].TextContent);
+                Assert.Contains("Kitchen", rows[0].TextContent);
+                Assert.Contains("Mopping", rows[0].TextContent);
+
+                Assert.Contains("Bob", rows[1].TextContent);
+                Assert.Contains("Living Room", rows[1].TextContent);
+                Assert.Contains("Dusting", rows[1].TextContent);
+            }
+
+            [Fact]
+            public void TaskList_WhenApplyingUserFilter_ShowsFilteredTasks()
+            {
+                // Arrange
+                _taskServiceMock.GetAllTasksAsync().Returns(_mockTasks);
+                _taskServiceMock.GetAllUsersAsync().Returns(_mockUsers);
+
+                var cut = RenderComponent<TaskList>();
+                cut.WaitForState(() => cut.FindAll("tbody tr").Count == 2);
+
+                // Act
+                // The component has an <InputText @bind-Value="filterUser" /> plus an "Apply" button
+                var filterInput = cut.Find("input[type=text]");
+                filterInput.Change("Alice"); // type "Alice" in the filter
+                var applyButton = cut.Find("button");
+                applyButton.Click(); // triggers LoadTasks() again, but the filtering is purely client-side
+
+                // Assert
+                // After filtering by "Alice", only the task belonging to Alice should remain
+                var rows = cut.FindAll("tbody tr");
+                Assert.Single(rows);
+                Assert.Contains("Alice", rows[0].TextContent);
+            }
+
+            [Fact]
+            public async Task TaskList_WhenReassigningUser_CallsChangeUserAsync()
+            {
+                // Arrange
+                _taskServiceMock.GetAllTasksAsync().Returns(_mockTasks);
+                _taskServiceMock.GetAllUsersAsync().Returns(_mockUsers);
+
+                var cut = RenderComponent<TaskList>();
+                cut.WaitForState(() => cut.FindAll("tbody tr").Count == 2);
+
+                // The first task is "Planning," so it should display a <select> for user reassignment.
+                // Let's pick that row:
+                var planningTask = _mockTasks.First(t => t.Status == CleaningApp.Domain.Entities.TaskStatus.Planning);
+                var rowIndex = _mockTasks.IndexOf(planningTask);
+
+                // We expect a <select> in that row. Let's find it.
+                // Each row has up to 1 <select> if the status == Planning
+                var selectsInTable = cut.FindAll("select");
+                Assert.Single(selectsInTable); // Should be only for the "Planning" row
+                var userSelect = selectsInTable[0];
+
+                // The user we want to reassign to:
+                var newUser = _mockUsers.Last(); // e.g. "Charlie"
+                var newUserIdString = newUser.Id.ToString();
+
+                // Act
+                userSelect.Change(newUserIdString);
+
+                // Assert
+                // The component should call TaskService.ChangeUserAsync(...) with the correct values
+                await _taskServiceMock.Received(1).ChangeUserAsync(planningTask.Id, newUser.Id);
             }
         }
     }

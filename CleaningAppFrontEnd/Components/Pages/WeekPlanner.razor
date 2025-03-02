@@ -52,9 +52,15 @@
     private DateTime weekStartDate = DateTime.Today;
     private IEnumerable<CleaningTaskViewModel>? tasksForWeek;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await TaskService.GenerateMonthlyTasksForPlaneradAsync();
+    }
+
     private async Task LoadTasksForWeek()
     {
         // Get tasks for the 7-day window from weekStartDate
+
         tasksForWeek = await TaskService.GetAllTasksForWeekAsync(weekStartDate);
     }
 

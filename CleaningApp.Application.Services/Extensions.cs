@@ -1,5 +1,6 @@
 ﻿using CleaningApp.Application.Dtos;
 using CleaningApp.Domain.Entities;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace CleaningApp.Application.Services
 {
@@ -11,6 +12,7 @@ namespace CleaningApp.Application.Services
             return new CleaningTaskViewModel
             {
                 Id = entity.Id,
+                UserId = entity.UserId,
                 UserName = entity.User?.Name ?? string.Empty,
                 RoomName = entity.Room?.Name ?? string.Empty,
                 TaskTypeName = entity.TaskType?.Name ?? string.Empty,

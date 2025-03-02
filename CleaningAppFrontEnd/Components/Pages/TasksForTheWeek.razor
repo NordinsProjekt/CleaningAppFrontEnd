@@ -1,0 +1,102 @@
+﻿@page "/tasks-for-the-week"
+@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
+@inject TaskService TaskService
+@rendermode InteractiveServer
+
+<h3>Tasks for the Week</h3>
+
+<p>Showing tasks for: @weekStartDate.ToString("dd MMMM") - @weekEndDate.ToString("dd MMMM")</p>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Task Type</th>
+        <th>Room</th>
+        <th>Assigned User</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (tasksForWeek == null || !tasksForWeek.Any())
+    {
+        <tr>
+            <td colspan="6">No tasks found for this week.</td>
+        </tr>
+    }
+    else
+    {
+        @foreach (var task in tasksForWeek)
+        {
+            <tr style="background-color: @(task.UserName == "Planerad" ? "lightcoral" : "lightgreen")">
+                <td>@task.TaskDate.ToString("dd MMM yyyy")</td>
+                <td>@task.TaskTypeName</td>
+                <td>@task.RoomName</td>
+                <td>
+                    <select value="@task.UserId" @onchange="async (e) => await AssignUser(task.Id, Guid.Parse(e.Value.ToString()))">
+                        <option value="@Guid.Empty">-- Assign User --</option>
+                        @foreach (var user in allUsers)
+                        {
+                            <option value="@user.Id">@user.Name</option>
+                        }
+                    </select>
+                </td>
+                <td>@(task.UserName == "Planerad" ? "Not Completed" : "Completed")</td>
+                <td>
+                    <button class="btn btn-sm btn-success" @onclick="() => MarkAsCompleted(task.Id)">Mark Completed</button>
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>
+
+@code {
+    private DateTime weekStartDate;
+    private DateTime weekEndDate;
+    private IEnumerable<CleaningTaskViewModel>? tasksForWeek;
+    private List<UserDto> allUsers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        CalculateWeekRange();
+        await LoadUsers();
+        await LoadTasksForWeek();
+    }
+
+    private void CalculateWeekRange()
+    {
+        DateTime today = DateTime.Today;
+        int daysUntilMonday = ((int)today.DayOfWeek == 0) ? -6 : -(int)today.DayOfWeek + 1;
+        weekStartDate = today.AddDays(daysUntilMonday);
+        weekEndDate = weekStartDate.AddDays(6);
+    }
+
+    private async Task LoadTasksForWeek()
+    {
+        tasksForWeek = await TaskService.GetAllTasksForWeekAsync(weekStartDate);
+    }
+
+    private async Task LoadUsers()
+    {
+        allUsers = await TaskService.GetAllUsersAsync();
+    }
+
+    private async Task AssignUser(Guid taskId, Guid userId)
+    {
+        if (userId != Guid.Empty)
+        {
+            await TaskService.AssignTaskAsync(taskId, userId);
+            await LoadTasksForWeek(); // Refresh list
+        }
+    }
+
+    private async Task MarkAsCompleted(Guid taskId)
+    {
+        await TaskService.CompleteCleaningTask(taskId);
+        await LoadTasksForWeek(); // Refresh list
+    }
+
+}
