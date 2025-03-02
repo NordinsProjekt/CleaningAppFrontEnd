@@ -22,6 +22,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IService<>), typeof(Service<>));
 builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<CleaningTaskService>();
 builder.Services.AddScoped<RoomService>();
 
 var app = builder.Build();

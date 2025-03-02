@@ -84,5 +84,10 @@ namespace CleaningApp.Application.Services
                 Name = entity.Name
             };
         }
+
+        public static TaskType ToEntity(this TaskTypeDto dto)
+        {
+            return new TaskType { Id = dto.Id, Name = dto.Name };
+        }
     }
 }

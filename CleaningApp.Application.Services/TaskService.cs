@@ -154,7 +154,6 @@ public class TaskService(IUnitOfWork unitOfWork)
         }).ToList();
     }
 
-    // 2) Get all task types for dropdown
     public async Task<List<TaskTypeDto>> GetAllTaskTypesAsync()
     {
         var types = await unitOfWork.Repository<TaskType>().GetAllAsync();
@@ -165,7 +164,6 @@ public class TaskService(IUnitOfWork unitOfWork)
         }).ToList();
     }
 
-    // 3) Get all users for dropdown
     public async Task<List<UserDto>> GetAllUsersAsync()
     {
         var users = await unitOfWork.Repository<User>().GetAllAsync();
@@ -178,11 +176,9 @@ public class TaskService(IUnitOfWork unitOfWork)
 
     public async Task GenerateTasksFromTemplatesAsync(DateTime startDate, DateTime endDate)
     {
-        // 1) Get all templates (with includes)
         var allTemplates = await unitOfWork.Repository<TaskTemplate>()
             .GetAllAsync(t => t.Room, t => t.TaskType, t => t.DefaultUser);
 
-        // 2) For each date in [startDate .. endDate)
         var currentDate = startDate.Date;
         while (currentDate < endDate)
         {
@@ -205,8 +201,6 @@ public class TaskService(IUnitOfWork unitOfWork)
                         }
 
                         break;
-
-                    // etc.
                 }
             }
 
@@ -252,7 +246,6 @@ public class TaskService(IUnitOfWork unitOfWork)
             await unitOfWork.CompleteAsync();
         }
     }
-
 
     public async Task DeleteTaskTemplateAsync(Guid templateId)
     {

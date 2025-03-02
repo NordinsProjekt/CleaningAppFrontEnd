@@ -1,0 +1,108 @@
+﻿@page "/task-types"
+@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
+@using Microsoft.Identity.Client
+@inject CleaningTaskService CleaningTaskService
+@rendermode InteractiveServer
+
+<h3>Manage Task Types</h3>
+
+<EditForm Model="@TaskTypeModel" OnValidSubmit="SaveTaskType">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Task Type Name</label>
+        <InputText @bind-Value="TaskTypeModel.Name" class="form-control" />
+        <span class="text-danger">@ErrorMessage</span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">@(TaskTypeModel.Id == Guid.Empty ? "Save" : "Update")</button>
+    <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+</EditForm>
+
+<hr />
+
+<h4>Existing Task Types</h4>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var taskType in TaskTypes.OrderBy(x => x.Name))
+        {
+            <tr>
+                <td>@taskType.Name</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" @onclick="() => EditTaskType(taskType)">Edit</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteTaskType(taskType.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private TaskTypeDto TaskTypeModel = new();
+    private IEnumerable<TaskTypeDto> TaskTypes { get; set; } = [];
+
+    private string ErrorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTaskTypes();
+    }
+
+    private async Task LoadTaskTypes()
+    {
+        TaskTypes = await CleaningTaskService.GetAllTaskTypesAsync();
+    }
+
+    private async Task SaveTaskType()
+    {
+        var existingTaskTypes = await CleaningTaskService.GetAllTaskTypesAsync();
+
+        if (existingTaskTypes.Any(t => t.Name.Equals(TaskTypeModel.Name, StringComparison.OrdinalIgnoreCase) && t.Id != TaskTypeModel.Id))
+        {
+            ErrorMessage = "A task type with this name already exists.";
+            return;
+        }
+
+        if (TaskTypeModel.Id == Guid.Empty)
+        {
+            await CleaningTaskService.AddTaskTypeAsync(TaskTypeModel);
+        }
+        else
+        {
+            await CleaningTaskService.UpdateTaskTypeAsync(TaskTypeModel);
+        }
+
+        TaskTypeModel = new TaskTypeDto();
+        ErrorMessage = "";
+        await LoadTaskTypes();
+    }
+
+    private void EditTaskType(TaskTypeDto taskType)
+    {
+        TaskTypeModel = new TaskTypeDto
+            {
+                Id = taskType.Id,
+                Name = taskType.Name
+            };
+    }
+
+    private async Task DeleteTaskType(Guid id)
+    {
+        await CleaningTaskService.DeleteTaskTypeAsync(id);
+        await LoadTaskTypes();
+    }
+
+    private void CancelEdit()
+    {
+        TaskTypeModel = new TaskTypeDto();
+        ErrorMessage = "";
+    }
+}
