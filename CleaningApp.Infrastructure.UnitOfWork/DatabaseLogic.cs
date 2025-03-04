@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.Extensions.DependencyInjection;
 using System.Linq.Expressions;
 
 namespace CleaningApp.Infrastructure.UnitOfWork;
@@ -19,65 +21,67 @@ public interface IRepository<T> where T : class
     Task AddAsync(T entity);
     void Update(T entity);
     void Remove(T entity);
-    Task<int> SaveChangesAsync();
 }
 
-public class GenericRepository<T>(CleaningDBContext context) : IRepository<T>
-    where T : class
+public class GenericRepository<T> : IRepository<T> where T : class
 {
-    private readonly DbSet<T> _dbSet = context.Set<T>();
+    private readonly IDbContextFactory<CleaningDBContext> _contextFactory;
+
+    public GenericRepository(IDbContextFactory<CleaningDBContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+    }
 
     public async Task<T> GetByIdAsync(Guid id)
     {
-        return await _dbSet.FindAsync(id);
+        using var context = _contextFactory.CreateDbContext();
+        return await context.Set<T>().FindAsync(id);
     }
 
     public async Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes)
     {
-        IQueryable<T> query =
-            includes.Aggregate<Expression<Func<T, object>>?, IQueryable<T>>(_dbSet,
-                (current, include) => current.Include(include));
+        using var context = _contextFactory.CreateDbContext();
+        IQueryable<T> query = context.Set<T>();
+
+        foreach (var include in includes)
+        {
+            query = query.Include(include);
+        }
 
         return await query.ToListAsync();
     }
 
     public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
     {
-        return await _dbSet.Where(predicate).ToListAsync();
+        using var context = _contextFactory.CreateDbContext();
+        return await context.Set<T>().Where(predicate).ToListAsync();
+    }
+
+    public Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate,
+        params Expression<Func<T, object>>[] includes)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task AddAsync(T entity)
     {
-        await _dbSet.AddAsync(entity);
+        using var context = _contextFactory.CreateDbContext();
+        await context.Set<T>().AddAsync(entity);
+        await context.SaveChangesAsync();
     }
 
     public void Update(T entity)
     {
-        _dbSet.Update(entity);
+        using var context = _contextFactory.CreateDbContext();
+        context.Set<T>().Update(entity);
+        context.SaveChanges();
     }
 
     public void Remove(T entity)
     {
-        _dbSet.Remove(entity);
-    }
-
-    public async Task<int> SaveChangesAsync()
-    {
-        return await context.SaveChangesAsync();
-    }
-
-    public async Task<IEnumerable<T>> FindAsync(
-        Expression<Func<T, bool>> predicate,
-        params Expression<Func<T, object>>[] includes)
-    {
-        IQueryable<T> query =
-            includes.Aggregate<Expression<Func<T, object>>, IQueryable<T>>(_dbSet,
-                (current, include) => current.Include(include));
-
-        // Apply each include expression
-
-        // Finally, apply the filter
-        return await query.Where(predicate).ToListAsync();
+        using var context = _contextFactory.CreateDbContext();
+        context.Set<T>().Remove(entity);
+        context.SaveChanges();
     }
 }
 
@@ -87,15 +91,23 @@ public interface IUnitOfWork
     Task<int> CompleteAsync();
 }
 
-public class UnitOfWork(CleaningDBContext context) : IUnitOfWork
+public class UnitOfWork : IUnitOfWork, IDisposable
 {
+    private readonly IDbContextFactory<CleaningDBContext> _contextFactory;
+    private CleaningDBContext _context;
     private readonly Dictionary<Type, object> _repositories = new();
+
+    public UnitOfWork(IDbContextFactory<CleaningDBContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+        _context = _contextFactory.CreateDbContext();
+    }
 
     public IRepository<T> Repository<T>() where T : class
     {
         if (!_repositories.ContainsKey(typeof(T)))
         {
-            _repositories[typeof(T)] = new GenericRepository<T>(context);
+            _repositories[typeof(T)] = new GenericRepository<T>(_contextFactory);
         }
 
         return (IRepository<T>)_repositories[typeof(T)];
@@ -103,6 +115,11 @@ public class UnitOfWork(CleaningDBContext context) : IUnitOfWork
 
     public async Task<int> CompleteAsync()
     {
-        return await context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
+    }
+
+    public void Dispose()
+    {
+        _context.Dispose();
     }
 }

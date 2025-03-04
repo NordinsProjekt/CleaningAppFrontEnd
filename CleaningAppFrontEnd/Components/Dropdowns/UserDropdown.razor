@@ -1,10 +1,11 @@
 ﻿@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
 
 <div class="mb-3">
     <label>Default User (optional):</label>
     <select @bind="SelectedUserId">
         <option value="@Guid.Empty">-- No Default User --</option>
-        @if (Users != null)
+        @if (Users.Any())
         {
             @foreach (var user in Users)
             {
@@ -15,8 +16,7 @@
 </div>
 
 @code {
-    [Parameter]
-    public List<UserDto> Users { get; set; } = new();
+    [Inject] public FrontendDropdownService Service { get; set; } = null!;
 
     private Guid _selectedUserId;
     [Parameter]
@@ -35,4 +35,13 @@
 
     [Parameter]
     public EventCallback<Guid> SelectedUserIdChanged { get; set; }
+
+    public List<UserDto> Users { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await Service.GetAllUsersAsync();
+
+    }
+
 }

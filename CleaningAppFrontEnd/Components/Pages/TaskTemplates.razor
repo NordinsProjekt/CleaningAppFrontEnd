@@ -35,11 +35,11 @@ else if (newTaskDuration == TaskTemplateType.Month)
 }
 
 <!-- Room & Task Type -->
-<RoomDropdown Rooms="rooms" @bind-SelectedRoomId="selectedRoomId" />
-<TaskTypeDropdown TaskTypes="taskTypes" @bind-SelectedTaskTypeId="selectedTaskTypeId" />
+<RoomDropdown @bind-SelectedRoomId="selectedRoomId" />
+<TaskTypeDropdown @bind-SelectedTaskTypeId="selectedTaskTypeId" />
 
 <!-- Default user (optional) -->
-<UserDropdown Users="users" @bind-SelectedUserId="selectedUserId" />
+<UserDropdown @bind-SelectedUserId="selectedUserId" />
 
 <!-- Additional notes -->
 <div class="mb-3">

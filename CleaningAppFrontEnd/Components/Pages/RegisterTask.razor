@@ -3,6 +3,7 @@
 @using CleaningApp.Application.Services;
 @using CleaningApp.Domain.Entities
 @using CleaningApp.Infrastructure.UnitOfWork
+@using CleaningAppFrontEnd.Components.Dropdowns
 @rendermode InteractiveServer
 @inject TaskService TaskService
 @inject IUnitOfWork UnitOfWork
@@ -14,35 +15,17 @@
 
     <div>
         <label for="userId">User</label>
-        <select @bind="taskDto.UserId" class="form-control">
-            <option value="">Select a User</option>
-            @foreach (var user in users)
-            {
-                <option value="@user.Id">@user.Name</option>
-            }
-        </select>
+        <UserDropdown @bind-SelectedUserId="taskDto.UserId"/>
     </div>
 
     <div>
         <label for="roomId">Room</label>
-        <select @bind="taskDto.RoomId" class="form-control">
-            <option value="">Select a Room</option>
-            @foreach (var room in rooms)
-            {
-                <option value="@room.Id">@room.Name</option>
-            }
-        </select>
+        <RoomDropdown @bind-SelectedRoomId="taskDto.RoomId" />
     </div>
 
     <div>
         <label for="taskTypeId">Task Type</label>
-        <select @bind="taskDto.TaskTypeId" class="form-control">
-            <option value="">Select a Task Type</option>
-            @foreach (var taskType in taskTypes)
-            {
-                <option value="@taskType.Id">@taskType.Name</option>
-            }
-        </select>
+        <TaskTypeDropdown @bind-SelectedTaskTypeId="taskDto.TaskTypeId"/>
     </div>
 
     <div>
@@ -68,25 +51,13 @@
     private EditContext editContext;
     private string successMessage = string.Empty;
     private string errorMessage = string.Empty;
-    private List<UserDto> users = new();
-    private List<RoomDto> rooms = new();
-    private List<TaskTypeDto> taskTypes = new();
 
-    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         editContext = new EditContext(taskDto);
-
-        users = (await UnitOfWork.Repository<User>().GetAllAsync())
-            .Select(u => new UserDto { Id = u.Id, Name = u.Name }).ToList();
-
-        rooms = (await UnitOfWork.Repository<Room>().GetAllAsync())
-            .Select(r => new RoomDto { Id = r.Id, Name = r.Name }).ToList();
-
-        taskTypes = (await UnitOfWork.Repository<TaskType>().GetAllAsync())
-            .Select(tt => new TaskTypeDto { Id = tt.Id, Name = tt.Name }).ToList();
     }
 
-    private async System.Threading.Tasks.Task RegisterTasks()
+    private async Task RegisterTasks()
     {
         try
         {

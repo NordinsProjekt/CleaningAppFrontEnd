@@ -1,8 +1,5 @@
 ﻿@page "/"
-@using CleaningApp.Application.Dtos
-@using CleaningApp.Application.Services
 @using CleaningAppFrontEnd.Components.Dropdowns
-@inject TaskService TaskService
 
 <PageTitle>Front Page</PageTitle>
 
@@ -19,16 +16,13 @@
     <DayOfWeekDropdown @bind-DayOfWeekValue="selectedDayOfWeek" />
 
     <h3>Pick a Room</h3>
-    <RoomDropdown Rooms="rooms"
-                  @bind-SelectedRoomId="selectedRoomId" />
+    <RoomDropdown @bind-SelectedRoomId="selectedRoomId" />
 
     <h3>Pick a Task Type</h3>
-    <TaskTypeDropdown TaskTypes="taskTypes"
-                      @bind-SelectedTaskTypeId="selectedTaskTypeId" />
+    <TaskTypeDropdown @bind-SelectedTaskTypeId="selectedTaskTypeId" />
 
     <h3>Pick a Default User</h3>
-    <UserDropdown Users="users"
-                  @bind-SelectedUserId="selectedUserId" />
+    <UserDropdown @bind-SelectedUserId="selectedUserId" />
 </div>
 
 <hr />
@@ -46,16 +40,4 @@
     private Guid selectedRoomId;
     private Guid selectedTaskTypeId;
     private Guid selectedUserId;
-
-    // Collections for the dropdowns
-    private List<RoomDto> rooms = new();
-    private List<TaskTypeDto> taskTypes = new();
-    private List<UserDto> users = new();
-
-    protected override async Task OnInitializedAsync()
-    {
-        rooms = await TaskService.GetAllRoomsAsync(); 
-        taskTypes = await TaskService.GetAllTaskTypesAsync();
-        users = await TaskService.GetAllUsersAsync();
-    }
 }

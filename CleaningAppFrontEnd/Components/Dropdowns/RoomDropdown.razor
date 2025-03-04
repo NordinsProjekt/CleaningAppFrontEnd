@@ -1,10 +1,11 @@
 ﻿@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
 
 <div class="mb-3">
     <label>Room:</label>
     <select @bind="SelectedRoomId">
         <option value="@Guid.Empty">-- Select Room --</option>
-        @if (Rooms != null)
+        @if (Rooms.Any())
         {
             @foreach (var room in Rooms)
             {
@@ -15,8 +16,14 @@
 </div>
 
 @code {
-    [Parameter]
+    [Inject] public FrontendDropdownService Service { get; set; } = null!;
+
     public List<RoomDto> Rooms { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Rooms = await Service.GetAllRoomsAsync();
+    }
 
     // Provide two-way binding for the selected RoomId
     private Guid _selectedRoomId;

@@ -12,18 +12,19 @@ builder.Services.AddRazorComponents()
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // Configure MySQL with Pomelo provider.
-builder.Services.AddDbContext<CleaningDBContext>(options =>
+builder.Services.AddDbContextFactory<CleaningDBContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 // Registrera UnitOfWork
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Generisk Repository-registrering (kan användas om du vill injicera specifika repositories)
-builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped(typeof(IService<>), typeof(Service<>));
-builder.Services.AddScoped<TaskService>();
-builder.Services.AddScoped<CleaningTaskService>();
-builder.Services.AddScoped<RoomService>();
+builder.Services.AddTransient(typeof(IRepository<>), typeof(GenericRepository<>));
+builder.Services.AddTransient(typeof(IService<>), typeof(Service<>));
+builder.Services.AddTransient<TaskService>();
+builder.Services.AddTransient<CleaningTaskService>();
+builder.Services.AddTransient<RoomService>();
+builder.Services.AddTransient<FrontendDropdownService>();
 
 var app = builder.Build();
 

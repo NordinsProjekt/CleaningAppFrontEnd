@@ -1,10 +1,11 @@
 ﻿@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
 
 <div class="mb-3">
     <label>Task Type:</label>
     <select @bind="SelectedTaskTypeId">
         <option value="@Guid.Empty">-- Select Task Type --</option>
-        @if (TaskTypes != null)
+        @if (TaskTypes.Any())
         {
             @foreach (var t in TaskTypes)
             {
@@ -15,7 +16,7 @@
 </div>
 
 @code {
-    [Parameter] public List<TaskTypeDto> TaskTypes { get; set; } = new();
+    [Inject] public FrontendDropdownService Service { get; set; } = null!;
 
     // Provide two-way binding for the selected TaskTypeId
     private Guid _selectedTaskTypeId;
@@ -35,4 +36,12 @@
 
     [Parameter]
     public EventCallback<Guid> SelectedTaskTypeIdChanged { get; set; }
+
+    public List<TaskTypeDto> TaskTypes { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        TaskTypes = await Service.GetAllTaskTypesAsync();
+    }
+
 }
