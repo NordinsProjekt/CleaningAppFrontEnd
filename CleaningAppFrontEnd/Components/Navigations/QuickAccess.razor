@@ -1,0 +1,19 @@
+﻿@using CleaningApp.Application.Services
+@using CleaningApp.Domain.Entities
+@inject NavigationManager NavigationManager
+
+<div class="crud-buttons">
+    <h3>Quick Access</h3>
+    <button class="btn btn-primary" @onclick="() => NavigateTo(NavigationPaths.RegisterTask.GetPath())">Register Task</button>
+    <button class="btn btn-secondary" @onclick="() => NavigateTo(NavigationPaths.TaskList.GetPath())">Task List</button>
+    <button class="btn btn-info" @onclick="() => NavigateTo(NavigationPaths.WeekPlanner.GetPath())">Week Planner</button>
+    <button class="btn btn-success" @onclick="() => NavigateTo(NavigationPaths.TaskTemplates.GetPath())">Manage Templates</button>
+    <button class="btn btn-warning" @onclick="() => NavigateTo(NavigationPaths.RoomsCrud.GetPath())">Rooms CRUD</button>
+</div>
+
+@code {
+    private void NavigateTo(string route)
+    {
+        NavigationManager.NavigateTo(route);
+    }
+}

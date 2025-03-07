@@ -1,0 +1,48 @@
+﻿@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
+@inject TaskService TaskService
+
+<div class="overview">
+    <h3>This Week’s Tasks</h3>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Room</th>
+            <th>Task</th>
+            <th>Assigned To</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (!_weeklyTasks.Any())
+        {
+            <tr><td colspan="5" class="text-center">No tasks scheduled for this week.</td></tr>
+        }
+        else
+        {
+            @foreach (var task in _weeklyTasks.OrderBy(x => x.TaskDate))
+            {
+                <tr>
+                    <td>@task.TaskDate.ToShortDateString()</td>
+                    <td>@task.RoomName</td>
+                    <td>@task.TaskTypeName</td>
+                    <td>@task.UserName</td>
+                    <td>@task.Status</td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<CleaningTaskViewModel> _weeklyTasks = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+        _weeklyTasks = (await TaskService.GetAllTasksForWeekAsync(startOfWeek)).ToList();
+    }
+}
+

@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.Extensions.DependencyInjection;
 using System.Linq.Expressions;
 
 namespace CleaningApp.Infrastructure.UnitOfWork;
@@ -34,19 +32,16 @@ public class GenericRepository<T> : IRepository<T> where T : class
 
     public async Task<T> GetByIdAsync(Guid id)
     {
-        using var context = _contextFactory.CreateDbContext();
+        await using var context = _contextFactory.CreateDbContext();
         return await context.Set<T>().FindAsync(id);
     }
 
     public async Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes)
     {
-        using var context = _contextFactory.CreateDbContext();
+        await using var context = _contextFactory.CreateDbContext();
         IQueryable<T> query = context.Set<T>();
 
-        foreach (var include in includes)
-        {
-            query = query.Include(include);
-        }
+        query = includes.Aggregate(query, (current, include) => current.Include(include));
 
         return await query.ToListAsync();
     }
@@ -57,15 +52,22 @@ public class GenericRepository<T> : IRepository<T> where T : class
         return await context.Set<T>().Where(predicate).ToListAsync();
     }
 
-    public Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate,
+    public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate,
         params Expression<Func<T, object>>[] includes)
     {
-        throw new NotImplementedException();
+        await using var context = _contextFactory.CreateDbContext();
+        IQueryable<T> query = context.Set<T>();
+
+        // Include all related entities
+        query = includes.Aggregate(query, (current, include) => current.Include(include));
+
+        // Apply filtering predicate
+        return await query.Where(predicate).ToListAsync();
     }
 
     public async Task AddAsync(T entity)
     {
-        using var context = _contextFactory.CreateDbContext();
+        await using var context = _contextFactory.CreateDbContext();
         await context.Set<T>().AddAsync(entity);
         await context.SaveChangesAsync();
     }

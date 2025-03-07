@@ -1,43 +1,18 @@
 ﻿@page "/"
-@using CleaningAppFrontEnd.Components.Dropdowns
+@using CleaningAppFrontEnd.Components.Navigations
+@using CleaningAppFrontEnd.Components.Tables
+@rendermode InteractiveServer
 
-<PageTitle>Front Page</PageTitle>
+<PageTitle>Cleaning App Overview</PageTitle>
 
 <h1 class="frontpage-title">Welcome to the Cleaning App!</h1>
 
-<p>
-    Below is a quick demo of our new components:
-</p>
+<p>Here’s an overview of this week’s cleaning tasks and quick access to management tools.</p>
 
 <hr />
 
-<div class="components-demo">
-    <h3>Pick a day of the week</h3>
-    <DayOfWeekDropdown @bind-DayOfWeekValue="selectedDayOfWeek" />
-
-    <h3>Pick a Room</h3>
-    <RoomDropdown @bind-SelectedRoomId="selectedRoomId" />
-
-    <h3>Pick a Task Type</h3>
-    <TaskTypeDropdown @bind-SelectedTaskTypeId="selectedTaskTypeId" />
-
-    <h3>Pick a Default User</h3>
-    <UserDropdown @bind-SelectedUserId="selectedUserId" />
-</div>
+<TaskTable/>
 
 <hr />
 
-<div class="frontpage-instructions">
-    <p>
-        Explore the menu on the left to manage tasks, create templates, and more. 
-        You can also register a task or plan your entire week!
-    </p>
-</div>
-
-@code {
-    // Fields backing the dropdown components
-    private int selectedDayOfWeek;
-    private Guid selectedRoomId;
-    private Guid selectedTaskTypeId;
-    private Guid selectedUserId;
-}
+<QuickAccess/>

@@ -90,3 +90,12 @@ public enum TaskTemplateType
     Quarter,
     Year
 }
+
+public enum NavigationPaths
+{
+    RegisterTask,
+    TaskList,
+    WeekPlanner,
+    TaskTemplates,
+    RoomsCrud
+}
