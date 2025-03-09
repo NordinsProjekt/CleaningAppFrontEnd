@@ -6,28 +6,6 @@ namespace CleaningApp.Application.Services;
 
 public class CleaningTaskService(IUnitOfWork unitOfWork)
 {
-    public async Task<IEnumerable<CleaningTaskViewModel>> GetAllTasksAsync()
-    {
-        var tasks = await unitOfWork.Repository<CleaningTask>()
-            .GetAllAsync(t => t.User, t => t.Room, t => t.TaskType);
-
-        return tasks.Select(t => new CleaningTaskViewModel
-        {
-            Id = t.Id,
-            UserName = t.User?.Name ?? "Unassigned",
-            RoomName = t.Room?.Name ?? "Unknown",
-            TaskTypeName = t.TaskType?.Name ?? "Unknown",
-            TaskDate = t.TaskDate,
-            Status = t.Status
-        });
-    }
-
-    public async Task<CleaningTaskDto?> GetTaskByIdAsync(Guid id)
-    {
-        var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(id);
-        return task?.ToDto();
-    }
-
     public async Task AddTaskTypeAsync(TaskTypeDto taskDto)
     {
         var newTask = taskDto.ToEntity();

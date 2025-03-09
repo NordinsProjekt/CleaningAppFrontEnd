@@ -1,6 +1,7 @@
 ﻿@page "/tasks-for-the-week"
 @using CleaningApp.Application.Dtos
 @using CleaningApp.Application.Services
+@using TaskStatus = CleaningApp.Domain.Entities.TaskStatus
 @inject TaskService TaskService
 @rendermode InteractiveServer
 
@@ -43,10 +44,18 @@
                         }
                     </select>
                 </td>
-                <td>@(task.UserName == "Planerad" ? "Not Completed" : "Completed")</td>
-                <td>
-                    <button class="btn btn-sm btn-success" @onclick="() => MarkAsCompleted(task.Id)">Mark Completed</button>
-                </td>
+                    <td>@(task.Status == CleaningApp.Domain.Entities.TaskStatus.Completed ? "Completed" : "Not Completed" )</td>
+                    <td>
+                        @if (task.Status == TaskStatus.Completed)
+                        {
+                            <button class="btn btn-sm btn-warning" @onclick="() => MarkAsNotCompleted(task.Id)">Mark Not Completed</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-success" @onclick="() => MarkAsCompleted(task.Id)">Mark Completed</button>
+                        }
+
+                    </td>
             </tr>
         }
     }
@@ -96,6 +105,12 @@
     private async Task MarkAsCompleted(Guid taskId)
     {
         await TaskService.CompleteCleaningTask(taskId);
+        await LoadTasksForWeek(); // Refresh list
+    }
+
+    private async Task MarkAsNotCompleted(Guid taskId)
+    {
+        await TaskService.UnCompleteCleaningTask(taskId);
         await LoadTasksForWeek(); // Refresh list
     }
 

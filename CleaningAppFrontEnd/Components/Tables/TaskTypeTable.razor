@@ -1,0 +1,126 @@
+﻿@using CleaningApp.Application.Dtos
+@using CleaningApp.Application.Services
+@using Microsoft.Identity.Client
+@inject TaskService TaskService
+
+@if (IsEditing)
+{
+    <EditForm Model="EditingTaskType" OnValidSubmit="SaveTaskType">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label>Task Type Name:</label>
+            <InputText @bind-Value="EditingTaskType.Name" class="form-control" />
+            <span class="text-danger" style="font-size: 12px;">@ErrorMessage</span>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+        <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+    </EditForm>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (TaskTypes != null)
+            {
+                @foreach (var taskType in TaskTypes.OrderBy(x => x.Name))
+                {
+                    <tr>
+                        <td>@taskType.Name</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" @onclick="() => StartEdit(taskType)">Edit</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteTaskType(taskType.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TaskTypeDto> TaskTypes = new();
+    private TaskTypeDto EditingTaskType = new();
+    private bool IsEditing { get; set; }
+    private string ErrorMessage { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTaskTypes();
+    }
+
+    private async Task LoadTaskTypes()
+    {
+        TaskTypes = await TaskService.GetAllTaskTypesAsync();
+    }
+
+    private void StartEdit(TaskTypeDto taskType)
+    {
+        EditingTaskType = new TaskTypeDto
+            {
+                Id = taskType.Id,
+                Name = taskType.Name
+            };
+        IsEditing = true;
+        ErrorMessage = string.Empty;
+    }
+
+    private async Task SaveTaskType()
+    {
+        if (string.IsNullOrWhiteSpace(EditingTaskType.Name))
+        {
+            ErrorMessage = "Task Type Name is required.";
+            return;
+        }
+
+        if (EditingTaskType.Name.Length < 3)
+        {
+            ErrorMessage = "Task Type Name must be at least 3 characters long.";
+            return;
+        }
+
+        if (EditingTaskType.Id == Guid.Empty)
+        {
+            // New task type
+            EditingTaskType.Id = Guid.NewGuid();
+            await TaskService.AddTaskAsync(new CleaningTaskDto
+                {
+                    TaskTypeId = EditingTaskType.Id
+                });
+        }
+        else
+        {
+            // Update existing task type
+            await TaskService.UpdateTaskAsync(new CleaningTaskDto
+                {
+                    Id = EditingTaskType.Id,
+                    TaskTypeId = EditingTaskType.Id
+                });
+        }
+
+        IsEditing = false;
+        await LoadTaskTypes();
+    }
+
+    private void CancelEdit()
+    {
+        IsEditing = false;
+        EditingTaskType = new TaskTypeDto();
+        ErrorMessage = string.Empty;
+    }
+
+    private async Task DeleteTaskType(Guid taskTypeId)
+    {
+        await TaskService.DeleteTaskAsync(taskTypeId);
+        await LoadTaskTypes();
+    }
+}
