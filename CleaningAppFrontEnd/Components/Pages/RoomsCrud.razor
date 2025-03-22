@@ -1,5 +1,6 @@
 ﻿@page "/roomsCrud"
 @using CleaningApp.Application.Dtos
+@using CleaningAppFrontEnd.Components.Tables
 @inject CleaningApp.Application.Services.RoomService RoomService
 @rendermode InteractiveServer
 
@@ -23,20 +24,7 @@
             <th>Name</th> <th style="width:150px;">Actions</th>
         </tr>
     </thead>
-    <tbody>
-        @if (Rooms is not null)
-        {
-            @foreach (var room in Rooms)
-            {
-                <tr>
-                    <td>@room.Name</td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" @onclick="@(() => EditRoom(room))">Edit</button> <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteRoom(room.Id))" style="margin-left:5px;">Delete</button>
-                    </td>
-                </tr>
-            }
-        }
-    </tbody>
+    <RoomTable Rooms="Rooms" EditRoom="EditRoom" DeleteRoom="DeleteRoom"/>
 </table>
 
 @code {
@@ -57,7 +45,6 @@
 
     private void EditRoom(RoomDto room)
     {
-        // Copy the data into the RoomModel so we can edit
         RoomModel = new RoomDto
         {
             Id = room.Id,
@@ -67,7 +54,6 @@
 
     private void CancelEdit()
     {
-        // Clear model to cancel edit
         RoomModel = new RoomDto();
     }
 
@@ -75,16 +61,13 @@
     {
         if (RoomModel.Id == Guid.Empty)
         {
-            // Creating a new room
             await RoomService.AddRoomAsync(RoomModel);
         }
         else
         {
-            // Updating an existing room
             await RoomService.UpdateRoomAsync(RoomModel);
         }
 
-        // Reset after saving
         RoomModel = new RoomDto();
         await LoadRooms();
     }

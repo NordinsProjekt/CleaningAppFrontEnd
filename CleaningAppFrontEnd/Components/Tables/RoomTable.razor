@@ -1,0 +1,28 @@
+﻿@using CleaningApp.Application.Dtos
+
+<tbody>
+@if (Rooms.Any())
+{
+    @foreach (var room in Rooms)
+    {
+        <tr>
+            <td>@room.Name</td>
+            <td>
+                <button class="btn btn-warning btn-sm" @onclick="@(() => EditRoom.InvokeAsync(room))">Edit</button>
+                <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteRoom.InvokeAsync(room.Id))" style="margin-left:5px;">Delete</button>
+            </td>
+        </tr>
+    }
+}
+</tbody>
+
+@code {
+    [Parameter]
+    public List<RoomDto> Rooms { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<RoomDto> EditRoom { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> DeleteRoom { get; set; }
+}
