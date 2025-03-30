@@ -100,7 +100,6 @@ public class TaskService(IUnitOfWork unitOfWork)
         unitOfWork.Repository<CleaningTask>().Update(task);
 
         await unitOfWork.CompleteAsync();
-        var check = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskId);
     }
 
     public async Task UnCompleteCleaningTask(Guid taskId)

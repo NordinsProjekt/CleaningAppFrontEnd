@@ -66,21 +66,6 @@
         await LoadTaskTypes();
     }
 
-    private void EditTaskType(TaskTypeDto taskType)
-    {
-        TaskTypeModel = new TaskTypeDto
-            {
-                Id = taskType.Id,
-                Name = taskType.Name
-            };
-    }
-
-    private async Task DeleteTaskType(Guid id)
-    {
-        await CleaningTaskService.DeleteTaskTypeAsync(id);
-        await LoadTaskTypes();
-    }
-
     private void CancelEdit()
     {
         TaskTypeModel = new TaskTypeDto();
