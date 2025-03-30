@@ -1,0 +1,39 @@
+﻿@using CleaningApp.Application.Dtos
+
+<div class="mb-3">
+    <label>@Label</label>
+    <select class="form-control" @onchange="HandleSelectionChange">
+        @foreach (var user in Users)
+        {
+            <option value="@user.Id" selected="@(user.Id == SelectedUserId)">
+                @user.Name
+            </option>
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter]
+    public List<UserDto> Users { get; set; } = new();
+    [Parameter] public Guid TaskId { get; set; }
+
+    [Parameter]
+    public Guid SelectedUserId { get; set; } = Guid.Empty;
+
+    [Parameter]
+    public EventCallback<Guid[]> OnUserAssigned { get; set; }
+
+    [Parameter]
+    public string Label { get; set; } = "Assign User";
+
+    [Parameter]
+    public string DefaultOptionText { get; set; } = "-- Select User --";
+
+    private async Task HandleSelectionChange(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out var selectedId))
+        {
+            await OnUserAssigned.InvokeAsync([TaskId, selectedId]);
+        }
+    }
+}

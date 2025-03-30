@@ -1,7 +1,7 @@
 ﻿@page "/task-types"
 @using CleaningApp.Application.Dtos
 @using CleaningApp.Application.Services
-@using Microsoft.Identity.Client
+@using CleaningAppFrontEnd.Components.Tables
 @inject CleaningTaskService CleaningTaskService
 @rendermode InteractiveServer
 
@@ -24,26 +24,7 @@
 <hr />
 
 <h4>Existing Task Types</h4>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var taskType in TaskTypes.OrderBy(x => x.Name))
-        {
-            <tr>
-                <td>@taskType.Name</td>
-                <td>
-                    <button class="btn btn-warning btn-sm" @onclick="() => EditTaskType(taskType)">Edit</button>
-                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteTaskType(taskType.Id)">Delete</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<TaskTypeTable />
 
 @code {
     private TaskTypeDto TaskTypeModel = new();
@@ -82,21 +63,6 @@
 
         TaskTypeModel = new TaskTypeDto();
         ErrorMessage = "";
-        await LoadTaskTypes();
-    }
-
-    private void EditTaskType(TaskTypeDto taskType)
-    {
-        TaskTypeModel = new TaskTypeDto
-            {
-                Id = taskType.Id,
-                Name = taskType.Name
-            };
-    }
-
-    private async Task DeleteTaskType(Guid id)
-    {
-        await CleaningTaskService.DeleteTaskTypeAsync(id);
         await LoadTaskTypes();
     }
 

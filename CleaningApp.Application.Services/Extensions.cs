@@ -16,7 +16,8 @@ namespace CleaningApp.Application.Services
                 UserName = entity.User?.Name ?? string.Empty,
                 RoomName = entity.Room?.Name ?? string.Empty,
                 TaskTypeName = entity.TaskType?.Name ?? string.Empty,
-                TaskDate = entity.TaskDate
+                TaskDate = entity.TaskDate,
+                Status = entity.Status
             };
         }
 
@@ -29,7 +30,7 @@ namespace CleaningApp.Application.Services
                 UserId = entity.UserId,
                 RoomId = entity.RoomId,
                 TaskTypeId = entity.TaskTypeId,
-                TaskDate = entity.TaskDate
+                TaskDate = entity.TaskDate,
             };
         }
 

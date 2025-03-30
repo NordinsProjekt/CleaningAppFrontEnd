@@ -8,7 +8,6 @@
 
 <h3>Task Templates</h3>
 
-<!-- CHOOSE TaskDuration -->
 <div class="mb-3">
     <label>Task Duration:</label>
     <select @bind="newTaskDuration">
@@ -21,7 +20,6 @@
     <p>Selected: @newTaskDuration</p>
 </div>
 
-<!-- Conditionally show DayOfWeek or DayOfMonth -->
 @if (newTaskDuration == TaskTemplateType.Week)
 {
     <DayOfWeekDropdown @bind-DayOfWeekValue="newTemplateDayOfWeek" />
@@ -34,14 +32,11 @@ else if (newTaskDuration == TaskTemplateType.Month)
     </div>
 }
 
-<!-- Room & Task Type -->
 <RoomDropdown @bind-SelectedRoomId="selectedRoomId" />
 <TaskTypeDropdown @bind-SelectedTaskTypeId="selectedTaskTypeId" />
 
-<!-- Default user (optional) -->
 <UserDropdown @bind-SelectedUserId="selectedUserId" />
 
-<!-- Additional notes -->
 <div class="mb-3">
     <label>Notes:</label>
     <textarea @bind="newTemplateNotes"></textarea>
@@ -83,10 +78,6 @@ else
                     {
                         @template.DayOfMonth
                     }
-                    else
-                    {
-                        <!-- etc. -->
-                    }
                 </td>
                 <td>@template.Room?.Name</td>
                 <td>@template.TaskType?.Name</td>
@@ -104,7 +95,6 @@ else
 }
 
 @code {
-    // Fields for new template
     private TaskTemplateType newTaskDuration = TaskTemplateType.Week;
     private int newTemplateDayOfWeek = 0; // Sunday
     private int newTemplateDayOfMonth = 1; // For monthly
@@ -113,7 +103,6 @@ else
     private Guid selectedUserId;
     private string newTemplateNotes = string.Empty;
 
-    // Data
     private List<RoomDto>? rooms;
     private List<TaskTypeDto>? taskTypes;
     private List<UserDto>? users;
@@ -144,10 +133,8 @@ else
 
         await TaskService.AddTaskTemplateAsync(newTemplate);
 
-        // Reload
         taskTemplates = await TaskService.GetAllTaskTemplatesAsync();
 
-        // Reset fields
         newTaskDuration = TaskTemplateType.Week;
         newTemplateDayOfWeek = 0;
         newTemplateDayOfMonth = 1;

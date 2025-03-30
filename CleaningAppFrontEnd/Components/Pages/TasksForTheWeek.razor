@@ -1,6 +1,8 @@
 ﻿@page "/tasks-for-the-week"
 @using CleaningApp.Application.Dtos
 @using CleaningApp.Application.Services
+@using TaskStatus = CleaningApp.Domain.Entities.TaskStatus
+
 @inject TaskService TaskService
 @rendermode InteractiveServer
 
@@ -10,46 +12,48 @@
 
 <table class="table">
     <thead>
-    <tr>
-        <th>Date</th>
-        <th>Task Type</th>
-        <th>Room</th>
-        <th>Assigned User</th>
-        <th>Status</th>
-        <th>Actions</th>
-    </tr>
+        <tr>
+            <th>Date</th>
+            <th>Task Type</th>
+            <th>Room</th>
+            <th>Assigned User</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
     </thead>
     <tbody>
-    @if (tasksForWeek == null || !tasksForWeek.Any())
-    {
-        <tr>
-            <td colspan="6">No tasks found for this week.</td>
-        </tr>
-    }
-    else
-    {
-        @foreach (var task in tasksForWeek)
+        @if (tasksForWeek == null || !tasksForWeek.Any())
         {
-            <tr style="background-color: @(task.UserName == "Planerad" ? "lightcoral" : "lightgreen")">
-                <td>@task.TaskDate.ToString("dd MMM yyyy")</td>
-                <td>@task.TaskTypeName</td>
-                <td>@task.RoomName</td>
-                <td>
-                    <select value="@task.UserId" @onchange="async (e) => await AssignUser(task.Id, Guid.Parse(e.Value.ToString()))">
-                        <option value="@Guid.Empty">-- Assign User --</option>
-                        @foreach (var user in allUsers)
-                        {
-                            <option value="@user.Id">@user.Name</option>
-                        }
-                    </select>
-                </td>
-                <td>@(task.UserName == "Planerad" ? "Not Completed" : "Completed")</td>
-                <td>
-                    <button class="btn btn-sm btn-success" @onclick="() => MarkAsCompleted(task.Id)">Mark Completed</button>
-                </td>
+            <tr>
+                <td colspan="6">No tasks found for this week.</td>
             </tr>
         }
-    }
+        else
+        {
+            @foreach (var task in tasksForWeek.OrderBy(t => t.TaskDate))
+            {
+                <tr style="background-color: @(task.UserName == "Planerad" ? "lightcoral" : "lightgreen")">
+                    <td>@task.TaskDate.ToString("dd MMM yyyy")</td>
+                    <td>@task.TaskTypeName</td>
+                    <td>@task.RoomName</td>
+                    <td>
+                        <UserAssignmentDropdown Users="allUsers" SelectedUserId="task.UserId" TaskId="task.Id" OnUserAssigned="((args) => AssignUser(args))"/>
+                    </td>
+                    <td>@(task.Status == TaskStatus.Completed ? "Completed" : "Not Completed" )</td>
+                    <td>
+                        @if (task.Status == TaskStatus.Completed)
+                        {
+                            <button class="btn btn-sm btn-warning" @onclick="() => MarkAsNotCompleted(task.Id)">Mark Not Completed</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-success" @onclick="() => MarkAsCompleted(task.Id)">Mark Completed</button>
+                        }
+
+                    </td>
+                </tr>
+            }
+        }
     </tbody>
 </table>
 
@@ -68,15 +72,17 @@
 
     private void CalculateWeekRange()
     {
-        DateTime today = DateTime.Today;
-        int daysUntilMonday = ((int)today.DayOfWeek == 0) ? -6 : -(int)today.DayOfWeek + 1;
+        var today = DateTime.Today;
+        var daysUntilMonday = ((int)today.DayOfWeek == 0) ? -6 : -(int)today.DayOfWeek + 1;
         weekStartDate = today.AddDays(daysUntilMonday);
         weekEndDate = weekStartDate.AddDays(6);
     }
 
     private async Task LoadTasksForWeek()
     {
+        tasksForWeek = null;
         tasksForWeek = await TaskService.GetAllTasksForWeekAsync(weekStartDate);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadUsers()
@@ -84,18 +90,21 @@
         allUsers = await TaskService.GetAllUsersAsync();
     }
 
-    private async Task AssignUser(Guid taskId, Guid userId)
+    private async Task AssignUser(Guid[] guidArray)
     {
-        if (userId != Guid.Empty)
-        {
-            await TaskService.AssignTaskAsync(taskId, userId);
+            await TaskService.AssignTaskAsync(guidArray[0], guidArray[1]);
             await LoadTasksForWeek(); // Refresh list
-        }
     }
 
     private async Task MarkAsCompleted(Guid taskId)
     {
         await TaskService.CompleteCleaningTask(taskId);
+        await LoadTasksForWeek(); // Refresh list
+    }
+
+    private async Task MarkAsNotCompleted(Guid taskId)
+    {
+        await TaskService.UnCompleteCleaningTask(taskId);
         await LoadTasksForWeek(); // Refresh list
     }
 

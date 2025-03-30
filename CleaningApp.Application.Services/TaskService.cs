@@ -98,7 +98,19 @@ public class TaskService(IUnitOfWork unitOfWork)
         task.Status = TaskStatus.Completed;
 
         unitOfWork.Repository<CleaningTask>().Update(task);
+
         await unitOfWork.CompleteAsync();
+    }
+
+    public async Task UnCompleteCleaningTask(Guid taskId)
+    {
+        var task = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskId);
+        task.Status = TaskStatus.Assigned;
+
+        unitOfWork.Repository<CleaningTask>().Update(task);
+
+        await unitOfWork.CompleteAsync();
+        var check = await unitOfWork.Repository<CleaningTask>().GetByIdAsync(taskId);
     }
 
     public async Task<UserDto> GetOrCreatePlaneradUserAsync()
