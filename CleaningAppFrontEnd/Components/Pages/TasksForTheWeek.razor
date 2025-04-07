@@ -1,5 +1,4 @@
 ﻿@page "/tasks-for-the-week"
-@using CleaningApp.Application.Dtos
 @using CleaningApp.Application.Services
 @using TaskStatus = CleaningApp.Domain.Entities.TaskStatus
 
@@ -8,60 +7,60 @@
 
 <h3>Tasks for the Week</h3>
 
-<p>Showing tasks for: @weekStartDate.ToString("dd MMMM") - @weekEndDate.ToString("dd MMMM")</p>
+<p>Showing tasks for: @_weekStartDate.ToString("dd MMMM") - @_weekEndDate.ToString("dd MMMM")</p>
 
 <table class="table">
     <thead>
-        <tr>
-            <th>Date</th>
-            <th>Task Type</th>
-            <th>Room</th>
-            <th>Assigned User</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
+    <tr>
+        <th>Date</th>
+        <th>Task Type</th>
+        <th>Room</th>
+        <th>Assigned User</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
     </thead>
     <tbody>
-        @if (tasksForWeek == null || !tasksForWeek.Any())
+    @if (_tasksForWeek == null || !_tasksForWeek.Any())
+    {
+        <tr>
+            <td colspan="6">No tasks found for this week.</td>
+        </tr>
+    }
+    else
+    {
+        @foreach (var task in _tasksForWeek.OrderBy(t => t.TaskDate))
         {
-            <tr>
-                <td colspan="6">No tasks found for this week.</td>
+            <tr style="background-color: @(task.UserName == "Planerad" ? "lightcoral" : "lightgreen")">
+                <td>@task.TaskDate.ToString("dd MMM yyyy")</td>
+                <td>@task.TaskTypeName</td>
+                <td>@task.RoomName</td>
+                <td>
+                    <UserAssignmentDropdown Users="_allUsers" SelectedUserId="task.UserId" TaskId="task.Id" OnUserAssigned="((args) => AssignUser(args))"/>
+                </td>
+                <td>@(task.Status == TaskStatus.Completed ? "Completed" : "Not Completed")</td>
+                <td>
+                    @if (task.Status == TaskStatus.Completed)
+                    {
+                        <button class="btn btn-sm btn-warning" @onclick="() => MarkAsNotCompleted(task.Id)">Mark Not Completed</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-sm btn-success" @onclick="() => MarkAsCompleted(task.Id)">Mark Completed</button>
+                    }
+
+                </td>
             </tr>
         }
-        else
-        {
-            @foreach (var task in tasksForWeek.OrderBy(t => t.TaskDate))
-            {
-                <tr style="background-color: @(task.UserName == "Planerad" ? "lightcoral" : "lightgreen")">
-                    <td>@task.TaskDate.ToString("dd MMM yyyy")</td>
-                    <td>@task.TaskTypeName</td>
-                    <td>@task.RoomName</td>
-                    <td>
-                        <UserAssignmentDropdown Users="allUsers" SelectedUserId="task.UserId" TaskId="task.Id" OnUserAssigned="((args) => AssignUser(args))"/>
-                    </td>
-                    <td>@(task.Status == TaskStatus.Completed ? "Completed" : "Not Completed" )</td>
-                    <td>
-                        @if (task.Status == TaskStatus.Completed)
-                        {
-                            <button class="btn btn-sm btn-warning" @onclick="() => MarkAsNotCompleted(task.Id)">Mark Not Completed</button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-sm btn-success" @onclick="() => MarkAsCompleted(task.Id)">Mark Completed</button>
-                        }
-
-                    </td>
-                </tr>
-            }
-        }
+    }
     </tbody>
 </table>
 
 @code {
-    private DateTime weekStartDate;
-    private DateTime weekEndDate;
-    private IEnumerable<CleaningTaskViewModel>? tasksForWeek;
-    private List<UserDto> allUsers = new();
+    private DateTime _weekStartDate;
+    private DateTime _weekEndDate;
+    private IEnumerable<CleaningTaskViewModel>? _tasksForWeek;
+    private List<UserDto> _allUsers = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -74,38 +73,38 @@
     {
         var today = DateTime.Today;
         var daysUntilMonday = ((int)today.DayOfWeek == 0) ? -6 : -(int)today.DayOfWeek + 1;
-        weekStartDate = today.AddDays(daysUntilMonday);
-        weekEndDate = weekStartDate.AddDays(6);
+        _weekStartDate = today.AddDays(daysUntilMonday);
+        _weekEndDate = _weekStartDate.AddDays(6);
     }
 
     private async Task LoadTasksForWeek()
     {
-        tasksForWeek = null;
-        tasksForWeek = await TaskService.GetAllTasksForWeekAsync(weekStartDate);
+        _tasksForWeek = null;
+        _tasksForWeek = await TaskService.GetAllTasksForWeekAsync(_weekStartDate);
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadUsers()
     {
-        allUsers = await TaskService.GetAllUsersAsync();
+        _allUsers = await TaskService.GetAllUsersAsync();
     }
 
     private async Task AssignUser(Guid[] guidArray)
     {
-            await TaskService.AssignTaskAsync(guidArray[0], guidArray[1]);
-            await LoadTasksForWeek(); // Refresh list
+        await TaskService.AssignTaskAsync(guidArray[0], guidArray[1]);
+        await LoadTasksForWeek();
     }
 
     private async Task MarkAsCompleted(Guid taskId)
     {
         await TaskService.CompleteCleaningTask(taskId);
-        await LoadTasksForWeek(); // Refresh list
+        await LoadTasksForWeek();
     }
 
     private async Task MarkAsNotCompleted(Guid taskId)
     {
         await TaskService.UnCompleteCleaningTask(taskId);
-        await LoadTasksForWeek(); // Refresh list
+        await LoadTasksForWeek();
     }
 
 }

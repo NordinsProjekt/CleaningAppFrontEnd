@@ -1,5 +1,4 @@
-﻿using CleaningApp.Application.Dtos;
-using CleaningApp.Domain.Entities;
+﻿using CleaningApp.Domain.Entities;
 using CleaningApp.Infrastructure.UnitOfWork;
 using TaskStatus = CleaningApp.Domain.Entities.TaskStatus;
 

@@ -1,5 +1,4 @@
-﻿using CleaningApp.Application.Dtos;
-using CleaningApp.Domain.Entities;
+﻿using CleaningApp.Domain.Entities;
 using CleaningApp.Infrastructure.UnitOfWork;
 
 namespace CleaningApp.Application.Services;

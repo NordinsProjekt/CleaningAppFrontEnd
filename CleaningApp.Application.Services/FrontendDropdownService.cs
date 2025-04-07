@@ -1,5 +1,4 @@
-﻿using CleaningApp.Application.Dtos;
-using CleaningApp.Domain.Entities;
+﻿using CleaningApp.Domain.Entities;
 using CleaningApp.Infrastructure.UnitOfWork;
 using System;
 using System.Collections.Generic;
@@ -55,21 +54,5 @@ public class FrontendDropdownService(IUnitOfWork unitOfWork)
             Status = t.Status,
             TaskDate = t.TaskDate
         });
-    }
-}
-
-public static class NavigationHelper
-{
-    public static string GetPath(this NavigationPaths path)
-    {
-        return path switch
-        {
-            NavigationPaths.RegisterTask => "register-task",
-            NavigationPaths.TaskList => "task-list",
-            NavigationPaths.WeekPlanner => "week-planner",
-            NavigationPaths.TaskTemplates => "task-templates",
-            NavigationPaths.RoomsCrud => "roomsCrud",
-            _ => "/"
-        };
     }
 }
