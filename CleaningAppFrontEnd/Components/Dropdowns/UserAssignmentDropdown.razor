@@ -24,6 +24,7 @@
     {
         if (Guid.TryParse(e.Value?.ToString(), out var selectedId))
         {
+
             await OnUserAssigned.InvokeAsync([TaskId, selectedId]);
         }
     }
