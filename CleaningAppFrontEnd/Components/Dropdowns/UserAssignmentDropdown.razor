@@ -13,21 +13,16 @@
 </div>
 
 @code {
-    [Parameter]
-    public List<UserDto> Users { get; set; } = new();
+    [Parameter] public List<UserDto> Users { get; set; } = new();
     [Parameter] public Guid TaskId { get; set; }
 
-    [Parameter]
-    public Guid SelectedUserId { get; set; } = Guid.Empty;
+    [Parameter] public Guid SelectedUserId { get; set; } = Guid.Empty;
 
-    [Parameter]
-    public EventCallback<Guid[]> OnUserAssigned { get; set; }
+    [Parameter] public EventCallback<Guid[]> OnUserAssigned { get; set; }
 
-    [Parameter]
-    public string Label { get; set; } = "Assign User";
+    [Parameter] public string Label { get; set; } = "Assign User";
 
-    [Parameter]
-    public string DefaultOptionText { get; set; } = "-- Select User --";
+    [Parameter] public string DefaultOptionText { get; set; } = "-- Select User --";
 
     private async Task HandleSelectionChange(ChangeEventArgs e)
     {
